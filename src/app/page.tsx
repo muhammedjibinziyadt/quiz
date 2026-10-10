@@ -41,9 +41,9 @@ export default function HomePage() {
                 />
               </div>
 
-              <div className="h-20 w-px bg-gradient-to-b from-transparent via-slate-700 to-transparent" />
+              <div className="h-14 sm:h-20 w-px bg-gradient-to-b from-transparent via-slate-700 to-transparent" />
 
-              <div className="relative w-44 h-24 sm:w-60 sm:h-32 drop-shadow-2xl transition-transform hover:scale-105">
+              <div className="relative w-[106px] h-[58px] sm:w-60 sm:h-32 drop-shadow-2xl transition-transform hover:scale-105">
                 <Image
                   src="/images/nattarivu-quiz-logo.png"
                   alt="നാട്ടറിവ് QUIZ 2026"

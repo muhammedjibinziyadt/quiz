@@ -68,8 +68,8 @@ export default function StudentLoginPage() {
                   priority
                 />
               </div>
-              <div className="h-14 w-px bg-slate-800" />
-              <div className="relative w-36 h-20 drop-shadow-md">
+              <div className="h-10 sm:h-14 w-px bg-slate-800" />
+              <div className="relative w-[90px] h-[50px] sm:w-36 sm:h-20 drop-shadow-md">
                 <Image
                   src="/images/nattarivu-quiz-logo.png"
                   alt="നാട്ടറിവ് QUIZ 2026"
