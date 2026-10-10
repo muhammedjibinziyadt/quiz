@@ -3,6 +3,21 @@ import { IQuestion } from "@/models/Question";
 import { IAnswerResult, QuizAttempt } from "@/models/QuizAttempt";
 import { broadcastLeaderboardUpdate } from "./pusher-server";
 
+export interface ScoringQuestion {
+  _id: unknown;
+  marks?: number | null;
+  negativeMarks?: number | null;
+  correctOptionId: string;
+  questionText?: string;
+  explanation?: string;
+}
+
+export interface ScoringQuiz {
+  marksPerQuestion: number;
+  negativeMarks: number;
+  negativeMarkingEnabled: boolean;
+}
+
 export interface EvaluationResult {
   score: number;
   totalPossibleMarks: number;
@@ -18,8 +33,8 @@ export interface EvaluationResult {
  * Evaluates submitted answers against actual correct options stored in the database.
  */
 export function evaluateQuizAttempt(
-  quiz: IQuiz,
-  questions: IQuestion[],
+  quiz: ScoringQuiz,
+  questions: ScoringQuestion[],
   savedAnswers: Array<{ questionId: string; selectedOptionId: string }>,
   startTime: Date,
   submittedAt: Date
@@ -51,7 +66,7 @@ export function evaluateQuizAttempt(
       unansweredCount++;
       answersDetail.push({
         questionId: qId,
-        questionText: q.questionText,
+        questionText: q.questionText || "",
         selectedOptionId: undefined,
         correctOptionId: q.correctOptionId,
         isCorrect: false,
@@ -64,7 +79,7 @@ export function evaluateQuizAttempt(
       totalScore += marksForQuestion;
       answersDetail.push({
         questionId: qId,
-        questionText: q.questionText,
+        questionText: q.questionText || "",
         selectedOptionId: selectedOption,
         correctOptionId: q.correctOptionId,
         isCorrect: true,
@@ -78,7 +93,7 @@ export function evaluateQuizAttempt(
       totalScore -= penalty;
       answersDetail.push({
         questionId: qId,
-        questionText: q.questionText,
+        questionText: q.questionText || "",
         selectedOptionId: selectedOption,
         correctOptionId: q.correctOptionId,
         isCorrect: false,

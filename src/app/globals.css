@@ -1,26 +1,119 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #090d16;
+    --foreground: #f8fafc;
+    --card: #0f172a;
+    --card-foreground: #f8fafc;
+    --popover: #0f172a;
+    --popover-foreground: #f8fafc;
+    --primary: #2563eb;
+    --primary-foreground: #ffffff;
+    --secondary: #1e293b;
+    --secondary-foreground: #f8fafc;
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+    --accent: #dc2626;
+    --accent-foreground: #ffffff;
+    --gold: #f59e0b;
+    --gold-foreground: #090d16;
+    --border: #1e293b;
+    --radius: 0.75rem;
+  }
+
+  body {
+    background-color: #080c14;
+    color: #f1f5f9;
+    font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Custom glowing effects inspired by MAERIKA 2K26 colors */
+.fest-glow-red {
+  box-shadow: 0 0 25px -5px rgba(220, 38, 38, 0.4);
+}
+
+.fest-glow-blue {
+  box-shadow: 0 0 25px -5px rgba(37, 99, 235, 0.4);
+}
+
+.fest-glow-gold {
+  box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.35);
+}
+
+.fest-glass {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.fest-glass-interactive {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fest-glass-interactive:hover {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: rgba(37, 99, 235, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Malayalam font styling */
+.font-malayalam {
+  font-family: var(--font-malayalam), "Noto Sans Malayalam", "Manjari", sans-serif;
+  line-height: 1.6;
+}
+
+/* Ranking animation classes */
+@keyframes rankUpPulse {
+  0% {
+    background-color: rgba(34, 197, 94, 0.3);
+    transform: translateY(-4px) scale(1.02);
+  }
+  100% {
+    background-color: transparent;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes rankDownPulse {
+  0% {
+    background-color: rgba(239, 68, 68, 0.25);
+    transform: translateY(4px) scale(0.98);
+  }
+  100% {
+    background-color: transparent;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-rank-up {
+  animation: rankUpPulse 1.2s ease-out;
+}
+
+.animate-rank-down {
+  animation: rankDownPulse 1.2s ease-out;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #090d16;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
 }
