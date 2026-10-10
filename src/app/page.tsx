@@ -43,7 +43,7 @@ export default function HomePage() {
 
               <div className="h-20 w-px bg-gradient-to-b from-transparent via-slate-700 to-transparent" />
 
-              <div className="relative w-36 h-20 sm:w-44 sm:h-24 drop-shadow-2xl transition-transform hover:scale-105">
+              <div className="relative w-44 h-24 sm:w-60 sm:h-32 drop-shadow-2xl transition-transform hover:scale-105">
                 <Image
                   src="/images/nattarivu-quiz-logo.png"
                   alt="നാട്ടറിവ് QUIZ 2026"
@@ -62,15 +62,8 @@ export default function HomePage() {
 
             {/* Main Headline */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tight max-w-4xl mx-auto leading-tight sm:leading-none">
-              Where Knowledge Meets Culture & Precision.
+              Maerika 2k26 ആർട്സ് ഫെസ്റ്റിന്റെ ഭാഗമായി സംഘടിപ്പിക്കുന്ന നാട്ടറിവ് ക്വിസ് 2026
             </h1>
-
-            {/* Subheading with Malayalam flavor */}
-            <p className="mt-6 text-base sm:text-lg md:text-xl text-slate-300 max-w-2xl mx-auto font-malayalam leading-relaxed">
-              കേരളത്തിന്റെ സാംസ്കാരിക പൈതൃകവും നാട്ടറിവുകളും ഉൾക്കൊള്ളുന്ന{" "}
-              <strong className="text-emerald-400">“നാട്ടറിവ് QUIZ 2026”</strong> തത്സമയ ക്വിസ്
-              മത്സരത്തിലേക്ക് സ്വാഗതം.
-            </p>
 
             {/* Action Buttons */}
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto">

@@ -104,7 +104,7 @@ export default function StudentQuizzesPage() {
                   className="object-contain"
                 />
               </div>
-              <div className="relative w-28 h-16 shrink-0">
+              <div className="relative w-36 h-20 shrink-0">
                 <Image
                   src="/images/nattarivu-quiz-logo.png"
                   alt="നാട്ടറിവ് QUIZ 2026"

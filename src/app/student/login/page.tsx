@@ -69,7 +69,7 @@ export default function StudentLoginPage() {
                 />
               </div>
               <div className="h-14 w-px bg-slate-800" />
-              <div className="relative w-28 h-16 drop-shadow-md">
+              <div className="relative w-36 h-20 drop-shadow-md">
                 <Image
                   src="/images/nattarivu-quiz-logo.png"
                   alt="നാട്ടറിവ് QUIZ 2026"
