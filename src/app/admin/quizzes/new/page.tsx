@@ -20,7 +20,7 @@ export default function NewQuizPage() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [durationMinutes, setDurationMinutes] = useState(1);
+  const [durationMinutes, setDurationMinutes] = useState(10);
   const [durationSecondsInput, setDurationSecondsInput] = useState(0);
   const [marksPerQuestion, setMarksPerQuestion] = useState(2);
   const [negativeMarkingEnabled, setNegativeMarkingEnabled] = useState(false);

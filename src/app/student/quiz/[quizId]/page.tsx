@@ -92,7 +92,8 @@ function QuizRunnerContent({
 
         setQuiz(data.quiz);
         setAttempt(data.attempt);
-        setQuestions(data.questions || []);
+        const loadedQuestions = data.questions || [];
+        setQuestions(loadedQuestions);
 
         // Restore previously saved answers if resuming
         const initialAnswers: Record<string, string> = {};
@@ -104,6 +105,16 @@ function QuizRunnerContent({
           );
         }
         setSelectedAnswers(initialAnswers);
+
+        // Resume at first unanswered question
+        const firstUnanswered = loadedQuestions.findIndex(
+          (q: Question) => !initialAnswers[q._id]
+        );
+        if (firstUnanswered !== -1) {
+          setCurrentIndex(firstUnanswered);
+        } else if (loadedQuestions.length > 0) {
+          setCurrentIndex(loadedQuestions.length - 1);
+        }
 
         // Compute initial remaining seconds from serverDeadline
         const deadlineMs = new Date(data.attempt.serverDeadline).getTime();
@@ -119,6 +130,15 @@ function QuizRunnerContent({
 
     initQuiz();
   }, [quizId]);
+
+  // Timer ref for smooth auto-advance after selecting option
+  const advanceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+    };
+  }, []);
 
   // Server-authoritative countdown ticker
   useEffect(() => {
@@ -140,8 +160,15 @@ function QuizRunnerContent({
     return () => clearInterval(timer);
   }, [attempt, submitting]);
 
-  // Select option and trigger background auto-save
-  const handleSelectOption = async (optionId: string) => {
+  // Furthest question accessible: student cannot skip past an unanswered question
+  const firstUnansweredIndex = questions.findIndex(
+    (q) => !selectedAnswers[q._id]
+  );
+  const maxAccessibleIndex =
+    firstUnansweredIndex === -1 ? questions.length - 1 : firstUnansweredIndex;
+
+  // Select option, sync in background, and automatically advance to next question
+  const handleSelectOption = (optionId: string) => {
     const currentQ = questions[currentIndex];
     if (!currentQ || !attempt || submitting) return;
 
@@ -153,17 +180,50 @@ function QuizRunnerContent({
 
     // Save in background (non-blocking)
     try {
-      await fetch(`/api/student/attempts/${attempt.id}/save-answer`, {
+      fetch(`/api/student/attempts/${attempt.id}/save-answer`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           questionId: currentQ._id,
           selectedOptionId: optionId,
         }),
+      }).catch((saveErr) => {
+        console.warn("Could not sync answer immediately:", saveErr);
       });
     } catch (saveErr) {
-      console.warn("Could not sync answer immediately (will submit with final payload):", saveErr);
+      console.warn("Could not sync answer immediately:", saveErr);
     }
+
+    // Clear previous advance timer if user changes option rapidly
+    if (advanceTimerRef.current) {
+      clearTimeout(advanceTimerRef.current);
+    }
+
+    // Automatically advance to the next question after visual confirmation delay (380ms)
+    if (currentIndex < questions.length - 1) {
+      advanceTimerRef.current = setTimeout(() => {
+        setCurrentIndex((prev) => Math.min(questions.length - 1, prev + 1));
+      }, 380);
+    }
+    // On the ending question, do not auto-submit - let student submit manually when ready
+  };
+
+  const handlePrevious = () => {
+    if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+    setCurrentIndex((prev) => Math.max(0, prev - 1));
+  };
+
+  const handleNext = () => {
+    if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+    const currentQ = questions[currentIndex];
+    if (!currentQ || !selectedAnswers[currentQ._id]) return;
+    setCurrentIndex((prev) => Math.min(maxAccessibleIndex, prev + 1));
+  };
+
+  const handleSelectQuestionFromPalette = (idx: number) => {
+    if (idx > maxAccessibleIndex) return; // Prevent jumping ahead past unanswered questions
+    if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+    setCurrentIndex(idx);
   };
 
   // Final Submit Handler
@@ -307,7 +367,7 @@ function QuizRunnerContent({
             <button
               onClick={() => setShowConfirmModal(true)}
               disabled={submitting}
-              className="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-semibold text-xs sm:text-sm shadow-md shadow-red-600/30 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-semibold text-xs sm:text-sm shadow-md shadow-red-600/30 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
             >
               <Send className="w-4 h-4" />
               <span>Submit Quiz</span>
@@ -345,193 +405,147 @@ function QuizRunnerContent({
       )}
 
       {/* Main Workspace */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Left 3 columns: Active Question & Options */}
-        <div className="lg:col-span-3 flex flex-col justify-between">
-          <div className="fest-glass rounded-2xl p-6 sm:p-8 border border-slate-800">
-            {/* Question Header */}
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full">
-                Question #{currentIndex + 1}
-              </span>
-              <span className="text-xs text-slate-400">
-                {currentAnswer ? (
-                  <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Answer Selected
-                  </span>
-                ) : (
-                  <span className="text-slate-500">Not Answered Yet</span>
-                )}
-              </span>
-            </div>
-
-            {/* Question Text with Malayalam font */}
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white leading-relaxed mb-6 font-malayalam">
-              {currentQ.questionText}
-            </h2>
-
-            {/* Question Image (if image-based question) */}
-            {currentQ.questionImage && (
-              <div className="relative w-full max-w-2xl h-64 sm:h-80 mx-auto rounded-xl overflow-hidden border border-slate-700/80 mb-6 bg-slate-900/50">
-                <Image
-                  src={currentQ.questionImage}
-                  alt={`Question ${currentIndex + 1} Image`}
-                  fill
-                  className="object-contain p-2"
-                />
-              </div>
-            )}
-
-            {/* Options List */}
-            <div className="space-y-3 sm:space-y-4">
-              {currentQ.options.map((opt, optIndex) => {
-                const isSelected = currentAnswer === opt.id;
-                const letter = String.fromCharCode(65 + optIndex); // A, B, C, D
-
-                return (
-                  <button
-                    key={opt.id}
-                    onClick={() => handleSelectOption(opt.id)}
-                    className={`w-full text-left p-4 sm:p-5 rounded-xl border transition-all flex items-start gap-4 cursor-pointer active:scale-[0.99] ${
-                      isSelected
-                        ? "bg-blue-600/20 border-blue-500 text-white fest-glow-blue"
-                        : "bg-slate-900/60 border-slate-800 text-slate-200 hover:bg-slate-800/80 hover:border-slate-700"
-                    }`}
-                  >
-                    <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
-                        isSelected
-                          ? "bg-blue-600 text-white shadow-md shadow-blue-600/40"
-                          : "bg-slate-800 text-slate-400 border border-slate-700"
-                      }`}
-                    >
-                      {letter}
-                    </div>
-
-                    <div className="flex-1 font-malayalam text-sm sm:text-base leading-relaxed">
-                      {opt.imageUrl && (
-                        <div className="relative w-40 h-24 rounded-lg overflow-hidden border border-slate-700 mb-2">
-                          <Image
-                            src={opt.imageUrl}
-                            alt={opt.text}
-                            fill
-                            className="object-contain p-1"
-                          />
-                        </div>
-                      )}
-                      <span>{opt.text}</span>
-                    </div>
-
-                    <div className="shrink-0 mt-1">
-                      <div
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          isSelected ? "border-blue-500 bg-blue-500" : "border-slate-600"
-                        }`}
-                      >
-                        {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col justify-between">
+        <div
+          key={currentQ._id}
+          className="fest-glass rounded-2xl p-6 sm:p-8 border border-slate-800 animate-question-fade"
+        >
+          {/* Question Header */}
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full">
+              Question #{currentIndex + 1}
+            </span>
+            <span className="text-xs">
+              {currentAnswer ? (
+                <span className="text-emerald-400 font-semibold flex items-center gap-1.5 animate-pulse">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Answer Selected</span>
+                  {currentIndex < questions.length - 1 && (
+                    <span className="text-slate-400 font-normal">→ Next question...</span>
+                  )}
+                </span>
+              ) : (
+                <span className="text-amber-400/90 font-medium flex items-center gap-1">
+                  Select an option to unlock next
+                </span>
+              )}
+            </span>
           </div>
 
-          {/* Bottom Navigation Buttons */}
-          <div className="flex items-center justify-between gap-4 mt-6 pt-4 border-t border-slate-800">
-            <button
-              onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
-              disabled={currentIndex === 0}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm font-semibold cursor-pointer"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Previous</span>
-            </button>
+          {/* Question Text with Malayalam font */}
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white leading-relaxed mb-6 font-malayalam">
+            {currentQ.questionText}
+          </h2>
 
-            <span className="text-xs text-slate-400">
-              {currentIndex + 1} of {questions.length}
-            </span>
+          {/* Question Image (if image-based question) */}
+          {currentQ.questionImage && (
+            <div className="relative w-full max-w-2xl h-64 sm:h-80 mx-auto rounded-xl overflow-hidden border border-slate-700/80 mb-6 bg-slate-900/50">
+              <Image
+                src={currentQ.questionImage}
+                alt={`Question ${currentIndex + 1} Image`}
+                fill
+                className="object-contain p-2"
+              />
+            </div>
+          )}
 
-            {currentIndex < questions.length - 1 ? (
-              <button
-                onClick={() => setCurrentIndex((prev) => Math.min(questions.length - 1, prev + 1))}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold shadow-md shadow-blue-600/30 transition-all cursor-pointer"
-              >
-                <span>Next</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            ) : (
-              <button
-                onClick={() => setShowConfirmModal(true)}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-semibold shadow-md shadow-red-600/30 transition-all cursor-pointer"
-              >
-                <Send className="w-4 h-4" />
-                <span>Submit Quiz</span>
-              </button>
-            )}
+          {/* Options List */}
+          <div className="space-y-3 sm:space-y-4">
+            {currentQ.options.map((opt, optIndex) => {
+              const isSelected = currentAnswer === opt.id;
+              const letter = String.fromCharCode(65 + optIndex); // A, B, C, D
+
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => handleSelectOption(opt.id)}
+                  className={`w-full text-left p-4 sm:p-5 rounded-xl border transition-all flex items-start gap-4 cursor-pointer active:scale-[0.99] ${
+                    isSelected
+                      ? "bg-blue-600/20 border-blue-500 text-white fest-glow-blue ring-1 ring-blue-500/50"
+                      : "bg-slate-900/60 border-slate-800 text-slate-200 hover:bg-slate-800/80 hover:border-slate-700"
+                  }`}
+                >
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
+                      isSelected
+                        ? "bg-blue-600 text-white shadow-md shadow-blue-600/40"
+                        : "bg-slate-800 text-slate-400 border border-slate-700"
+                    }`}
+                  >
+                    {letter}
+                  </div>
+
+                  <div className="flex-1 font-malayalam text-sm sm:text-base leading-relaxed">
+                    {opt.imageUrl && (
+                      <div className="relative w-40 h-24 rounded-lg overflow-hidden border border-slate-700 mb-2">
+                        <Image
+                          src={opt.imageUrl}
+                          alt={opt.text}
+                          fill
+                          className="object-contain p-1"
+                        />
+                      </div>
+                    )}
+                    <span>{opt.text}</span>
+                  </div>
+
+                  <div className="shrink-0 mt-1">
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                        isSelected ? "border-blue-500 bg-blue-500" : "border-slate-600"
+                      }`}
+                    >
+                      {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Right 1 column: Question Palette & Overview */}
-        <div className="lg:col-span-1">
-          <div className="fest-glass rounded-2xl p-6 border border-slate-800 sticky top-28">
-            <h3 className="text-sm font-bold text-white mb-4 flex items-center justify-between">
-              <span>Question Palette</span>
-              <span className="text-xs font-normal text-slate-400">
-                {answeredCount}/{questions.length} Answered
-              </span>
-            </h3>
+        {/* Bottom Navigation Buttons */}
+        <div className="flex items-center justify-between gap-4 mt-6 pt-4 border-t border-slate-800">
+          <button
+            onClick={handlePrevious}
+            disabled={currentIndex === 0}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm font-semibold cursor-pointer"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            <span>Previous</span>
+          </button>
 
-            {/* Grid of question bubbles */}
-            <div className="grid grid-cols-5 gap-2.5 mb-6">
-              {questions.map((q, idx) => {
-                const isCurrent = idx === currentIndex;
-                const isAnswered = !!selectedAnswers[q._id];
+          <div className="flex flex-col items-center">
+            <span className="text-xs font-semibold text-slate-300">
+              {currentIndex + 1} of {questions.length}
+            </span>
+            {!currentAnswer && currentIndex < questions.length - 1 && (
+              <span className="text-[10px] text-amber-400/80 font-medium">Complete to unlock next</span>
+            )}
+          </div>
 
-                return (
-                  <button
-                    key={q._id}
-                    onClick={() => setCurrentIndex(idx)}
-                    className={`h-10 rounded-xl font-bold text-xs flex items-center justify-center transition-all cursor-pointer ${
-                      isCurrent
-                        ? "border-2 border-blue-400 bg-blue-600 text-white shadow-md shadow-blue-600/40 scale-105"
-                        : isAnswered
-                        ? "bg-emerald-600/25 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-600/40"
-                        : "bg-slate-900 border border-slate-800 text-slate-400 hover:bg-slate-800"
-                    }`}
-                  >
-                    {idx + 1}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Legend */}
-            <div className="space-y-2 py-4 border-t border-slate-800 text-xs text-slate-400">
-              <div className="flex items-center gap-2">
-                <div className="w-3.5 h-3.5 rounded bg-emerald-600/40 border border-emerald-500" />
-                <span>Answered ({answeredCount})</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3.5 h-3.5 rounded bg-slate-900 border border-slate-800" />
-                <span>Unanswered ({questions.length - answeredCount})</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3.5 h-3.5 rounded border-2 border-blue-400 bg-blue-600" />
-                <span>Current Question</span>
-              </div>
-            </div>
-
-            {/* Mobile Submit Button */}
+          {currentIndex < questions.length - 1 ? (
             <button
-              onClick={() => setShowConfirmModal(true)}
-              disabled={submitting}
-              className="w-full mt-4 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-semibold text-sm shadow-lg shadow-red-600/30 transition-all cursor-pointer"
+              onClick={handleNext}
+              disabled={!currentAnswer || currentIndex >= maxAccessibleIndex}
+              title={!currentAnswer ? "Answer this question to proceed" : "Next question"}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:border disabled:border-slate-700/60 disabled:text-slate-500 disabled:cursor-not-allowed disabled:shadow-none text-white text-sm font-semibold shadow-md shadow-blue-600/30 transition-all cursor-pointer"
+            >
+              <span>Next</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+                setShowConfirmModal(true);
+              }}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-semibold shadow-md shadow-red-600/30 transition-all cursor-pointer"
             >
               <Send className="w-4 h-4" />
-              <span>Submit Contest</span>
+              <span>Submit Quiz</span>
             </button>
-          </div>
+          )}
         </div>
       </main>
 
