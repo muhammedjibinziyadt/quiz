@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
@@ -81,38 +80,19 @@ export default function StudentQuizzesPage() {
         {/* Welcome Banner */}
         <div className="fest-glass rounded-2xl p-6 sm:p-8 mb-10 border border-slate-800 relative overflow-hidden">
           <div className="absolute -right-12 -top-12 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-400 text-xs font-semibold mb-3">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                Participant Dashboard
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                Welcome, {student ? student.name : "Participant"}!
-              </h1>
-              <p className="mt-1.5 text-slate-400 text-sm">
-                Representing <span className="text-slate-200 font-medium">{student?.place}</span> • MAERIKA 2K26 Arts Fest Competition
+          <div className="relative z-10">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-400 text-xs font-semibold mb-3">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              Participant Dashboard
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              Welcome, {student ? student.name : "Participant"}!
+            </h1>
+            {student?.place && (
+              <p className="mt-1.5 text-slate-300 text-sm font-medium">
+                {student.place}
               </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="relative w-16 h-20 shrink-0">
-                <Image
-                  src="/images/maerika-arts-fest-logo.png"
-                  alt="MAERIKA 2K26"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              <div className="relative w-24 h-14 sm:w-36 sm:h-20 shrink-0">
-                <Image
-                  src="/images/nattarivu-quiz-logo.png"
-                  alt="നാട്ടറിവ് QUIZ 2026"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -182,11 +162,10 @@ export default function StudentQuizzesPage() {
                     {/* Cover or Logo Badge */}
                     <div className="flex items-start justify-between gap-3 mb-4">
                       <span
-                        className={`text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${
-                          quiz.quizType === "image"
+                        className={`text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${quiz.quizType === "image"
                             ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
                             : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
-                        }`}
+                          }`}
                       >
                         {quiz.quizType === "image" ? "Visual / Image Quiz" : "MCQ Text Quiz"}
                       </span>
@@ -229,9 +208,8 @@ export default function StudentQuizzesPage() {
                       </div>
                       <div className="flex items-center gap-1.5">
                         <AlertTriangle
-                          className={`w-4 h-4 shrink-0 ${
-                            quiz.negativeMarkingEnabled ? "text-red-400" : "text-slate-500"
-                          }`}
+                          className={`w-4 h-4 shrink-0 ${quiz.negativeMarkingEnabled ? "text-red-400" : "text-slate-500"
+                            }`}
                         />
                         <span>
                           {quiz.negativeMarkingEnabled
