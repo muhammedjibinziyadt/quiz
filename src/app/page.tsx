@@ -85,7 +85,7 @@ export default function HomePage() {
             </div>
 
             {/* Main Headline */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight max-w-4xl mx-auto leading-snug sm:leading-tight font-malayalam drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]">
+            <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold text-white tracking-tight max-w-4xl mx-auto leading-snug sm:leading-tight font-malayalam drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]">
               Maerika 2k26 ആർട്സ് ഫെസ്റ്റിന്റെ ഭാഗമായി സംഘടിപ്പിക്കുന്ന നാട്ടറിവ് ക്വിസ് 2026
             </h1>
 
