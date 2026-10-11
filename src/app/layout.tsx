@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Noto_Sans_Malayalam } from "next/font/google";
+import { Plus_Jakarta_Sans, Anek_Malayalam } from "next/font/google";
 import "./globals.css";
 
 const jakartaSans = Plus_Jakarta_Sans({
@@ -9,10 +9,10 @@ const jakartaSans = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-const notoSansMalayalam = Noto_Sans_Malayalam({
+const anekMalayalam = Anek_Malayalam({
   variable: "--font-malayalam",
-  subsets: ["malayalam"],
-  weight: ["400", "500", "600", "700"],
+  subsets: ["malayalam", "latin"],
+  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 });
 
@@ -33,7 +33,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${jakartaSans.variable} ${notoSansMalayalam.variable} h-full dark`}
+      className={`${jakartaSans.variable} ${anekMalayalam.variable} h-full dark`}
     >
       <body className="min-h-full flex flex-col bg-[#080c14] text-slate-100 antialiased selection:bg-blue-600 selection:text-white">
         {children}

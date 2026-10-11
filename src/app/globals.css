@@ -66,9 +66,9 @@
 }
 
 /* Malayalam font styling */
-.font-malayalam {
-  font-family: var(--font-malayalam), "Noto Sans Malayalam", "Manjari", sans-serif;
-  line-height: 1.6;
+.font-malayalam,
+.font-anek {
+  font-family: var(--font-malayalam), "Anek Malayalam", "Noto Sans Malayalam", "Manjari", sans-serif;
 }
 
 /* Ranking animation classes */
