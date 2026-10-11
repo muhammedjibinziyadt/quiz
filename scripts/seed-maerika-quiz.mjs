@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
-import crypto from "crypto";
 import fs from "fs";
 
 if (fs.existsSync(".env.local")) {
@@ -19,26 +17,22 @@ if (fs.existsSync(".env.local")) {
   });
 }
 
-const SESSION_SECRET =
-  process.env.SESSION_SECRET || "maerika_2k26_arts_fest_super_secure_jwt_session_secret_key_987654321";
-
-function hashAccessCode(code) {
-  const normalized = code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
-  return crypto.createHmac("sha256", SESSION_SECRET).update(normalized).digest("hex");
-}
-
 async function seed() {
   const uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/maerika_quiz_2026";
+  const dbName = process.env.MONGODB_DB || "Maerika";
   console.log("Connecting to MongoDB for seeding:", uri);
 
   let conn;
   try {
-    conn = await mongoose.connect(uri, { serverSelectionTimeoutMS: 3000 });
+    conn = await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 5000,
+      dbName,
+    });
   } catch (err) {
     console.warn("Could not connect to local/specified MongoDB directly. Booting mongodb-memory-server...");
     const { MongoMemoryServer } = await import("mongodb-memory-server");
-    const mongod = await MongoMemoryServer.create({ instance: { dbName: "maerika_quiz_2026" } });
-    conn = await mongoose.connect(mongod.getUri());
+    const mongod = await MongoMemoryServer.create({ instance: { dbName } });
+    conn = await mongoose.connect(mongod.getUri(), { dbName });
     console.log("Connected to MongoMemoryServer at:", mongod.getUri());
   }
 
@@ -50,60 +44,7 @@ async function seed() {
   await db.collection("questions").deleteMany({});
   await db.collection("quizattempts").deleteMany({});
 
-  console.log("🌱 Creating Sample Registered Students...");
-
-  const sampleStudents = [
-    {
-      name: "Abhinav Krishna",
-      phone: "+91 98471 23456",
-      place: "Thrissur",
-      code: "MK-ABHI-2026",
-    },
-    {
-      name: "Devika Nair",
-      phone: "+91 94462 87654",
-      place: "Kozhikode",
-      code: "MK-DEVI-2026",
-    },
-    {
-      name: "Muhammed Fayis",
-      phone: "+91 97453 11223",
-      place: "Malappuram",
-      code: "MK-FAYI-2026",
-    },
-    {
-      name: "Ananya Menon",
-      phone: "+91 98950 44556",
-      place: "Ernakulam",
-      code: "MK-ANAN-2026",
-    },
-    {
-      name: "Joel Joseph",
-      phone: "+91 94951 99887",
-      place: "Kottayam",
-      code: "MK-JOEL-2026",
-    },
-  ];
-
-  const studentDocs = [];
-  for (const s of sampleStudents) {
-    const student = await db.collection("students").insertOne({
-      name: s.name,
-      phone: s.phone,
-      place: s.place,
-      accessCodeHash: hashAccessCode(s.code),
-      accessCodePrefix: s.code.slice(0, 7),
-      isActive: true,
-      notes: "MAERIKA 2K26 Participant",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    studentDocs.push({ ...s, _id: student.insertedId });
-  }
-
-  console.log("✅ Created 5 sample students.");
-
-  console.log("🌱 Creating Quizzes...");
+  console.log("🌱 Creating Official Competitions...");
 
   // 1. Text-based Malayalam Cultural Quiz: "നാട്ടറിവ് QUIZ 2026"
   const nattarivuQuizResult = await db.collection("quizzes").insertOne({
@@ -285,83 +226,14 @@ async function seed() {
   await db.collection("questions").insertMany(visualQuestions);
   console.log("✅ Created 'MAERIKA 2K26 Visual Arts & Symbols Challenge' with image questions.");
 
-  // Seed sample completed attempts so the Live Leaderboard has initial data
-  console.log("🌱 Seeding sample completed attempts for live leaderboard demonstration...");
-
-  const attempt1 = await db.collection("quizattempts").insertOne({
-    quizId: nattarivuQuizId,
-    studentId: studentDocs[0]._id, // Abhinav
-    attemptNumber: 1,
-    startTime: new Date(Date.now() - 250000),
-    serverDeadline: new Date(Date.now() + 50000),
-    submittedAt: new Date(Date.now() - 120000),
-    isCompleted: true,
-    score: 10,
-    totalPossibleMarks: 10,
-    correctCount: 5,
-    incorrectCount: 0,
-    unansweredCount: 0,
-    completionTimeSeconds: 130,
-    savedAnswers: [
-      { questionId: "opt_2", selectedOptionId: "opt_2" },
-    ],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
-
-  const attempt2 = await db.collection("quizattempts").insertOne({
-    quizId: nattarivuQuizId,
-    studentId: studentDocs[1]._id, // Devika
-    attemptNumber: 1,
-    startTime: new Date(Date.now() - 230000),
-    serverDeadline: new Date(Date.now() + 70000),
-    submittedAt: new Date(Date.now() - 85000),
-    isCompleted: true,
-    score: 8,
-    totalPossibleMarks: 10,
-    correctCount: 4,
-    incorrectCount: 1,
-    unansweredCount: 0,
-    completionTimeSeconds: 145,
-    savedAnswers: [],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
-
-  const attempt3 = await db.collection("quizattempts").insertOne({
-    quizId: nattarivuQuizId,
-    studentId: studentDocs[2]._id, // Fayis
-    attemptNumber: 1,
-    startTime: new Date(Date.now() - 200000),
-    serverDeadline: new Date(Date.now() + 100000),
-    submittedAt: new Date(Date.now() - 35000),
-    isCompleted: true,
-    score: 7.5,
-    totalPossibleMarks: 10,
-    correctCount: 4,
-    incorrectCount: 1,
-    unansweredCount: 0,
-    completionTimeSeconds: 165,
-    savedAnswers: [],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
-
   console.log("\n=======================================================");
-  console.log("🎉 MAERIKA 2K26 QUIZ DATABASE SUCCESSFULLY SEEDED!");
+  console.log("🎉 MAERIKA 2K26 OFFICIAL QUIZZES SEEDED (0 DUMMY DATA)");
   console.log("=======================================================");
-  console.log("👑 ADMIN CREDENTIALS:");
-  console.log("   URL: http://localhost:3000/admin/login");
-  console.log("   Username: admin");
-  console.log("   Password: admin123");
-  console.log("-------------------------------------------------------");
-  console.log("🎓 SAMPLE STUDENT ACCESS CODES:");
-  sampleStudents.forEach((s) => {
-    console.log(`   - ${s.name} (${s.place}): ${s.code}`);
-  });
-  console.log("   URL: http://localhost:3000/student/login");
+  console.log("👑 ADMIN PORTAL: http://localhost:3000/admin/login");
+  console.log("🎓 STUDENT PORTAL: http://localhost:3000/student/login");
   console.log("=======================================================\n");
 
+  await mongoose.disconnect();
   process.exit(0);
 }
 

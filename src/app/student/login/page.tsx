@@ -131,7 +131,7 @@ export default function StudentLoginPage() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Rahul Sharma"
+                  placeholder="Enter full name"
                   required
                   className="w-full px-4 py-3 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 />
@@ -147,7 +147,7 @@ export default function StudentLoginPage() {
                   inputMode="numeric"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="e.g. 98471 23456"
+                  placeholder="Enter phone number"
                   required
                   className="w-full px-4 py-3 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-mono"
                 />
@@ -162,7 +162,7 @@ export default function StudentLoginPage() {
                   type="text"
                   value={place}
                   onChange={(e) => setPlace(e.target.value)}
-                  placeholder="e.g. Thrissur / കോഴിക്കോട്"
+                  placeholder="Enter place / location"
                   required
                   className="w-full px-4 py-3 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 />

@@ -106,15 +106,19 @@ npm run hash:admin your_secret_password
 ```
 Copy the printed `ADMIN_PASSWORD_HASH` into your `.env.local`.
 
-### 3. Seed Database with Questions & Sample Students
-Seeds authentic Malayalam questions (“നാട്ടറിവ് QUIZ 2026”), visual emblem questions, and sample participants:
+### 3. Clear or Seed Database
+- To clear all records and start completely empty:
+```bash
+npm run db:clear
+```
+- To seed the official Malayalam questions (“നാട്ടറിവ് QUIZ 2026”) and visual emblem questions:
 ```bash
 npm run seed
 ```
 
-Default credentials seeded:
-- **Admin Portal**: `http://localhost:3000/admin/login` (Username: `admin`, Password: `admin123`)
-- **Student Entry**: `http://localhost:3000/student/login` (Sample Access Codes: `MK-ABHI-2026`, `MK-DEVI-2026`, `MK-FAYI-2026`)
+Access portals:
+- **Admin Portal**: `http://localhost:3000/admin/login`
+- **Student Registration & Entry**: `http://localhost:3000/student/login` (Participants register with their name, phone, and location)
 
 ### 4. Run Development Server
 ```bash

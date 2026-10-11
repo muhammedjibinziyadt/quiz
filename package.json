@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "node --test tests/scoring.test.mjs tests/access-control.test.mjs tests/timing-and-duplicate.test.mjs",
     "seed": "node scripts/seed-maerika-quiz.mjs",
+    "db:clear": "node scripts/clear-all-data.mjs",
     "hash:admin": "node scripts/generate-admin-hash.mjs"
   },
   "dependencies": {

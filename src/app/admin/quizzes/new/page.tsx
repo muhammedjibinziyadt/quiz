@@ -115,7 +115,7 @@ export default function NewQuizPage() {
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. നാട്ടറിവ് QUIZ 2026 (Kerala Heritage & Culture)"
+                placeholder="Enter quiz title"
                 required
                 className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm"
               />
@@ -130,7 +130,7 @@ export default function NewQuizPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                placeholder="Festival background, context, or syllabus..."
+                placeholder="Enter description (optional)"
                 className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm"
               />
             </div>
