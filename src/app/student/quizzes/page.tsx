@@ -22,7 +22,7 @@ interface QuizItem {
   title: string;
   description?: string;
   coverImage?: string;
-  quizType: "text" | "image";
+  quizType?: "text" | "image" | "mixed";
   durationSeconds: number;
   marksPerQuestion: number;
   negativeMarkingEnabled: boolean;
@@ -161,13 +161,8 @@ export default function StudentQuizzesPage() {
                   <div>
                     {/* Cover or Logo Badge */}
                     <div className="flex items-start justify-between gap-3 mb-4">
-                      <span
-                        className={`text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${quiz.quizType === "image"
-                            ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
-                            : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
-                          }`}
-                      >
-                        {quiz.quizType === "image" ? "Visual / Image Quiz" : "MCQ Text Quiz"}
+                      <span className="text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                        Live Competition
                       </span>
 
                       {quiz.activeAttemptId ? (

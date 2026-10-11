@@ -65,6 +65,9 @@ export async function PUT(
     }
 
     // Apply updates
+    if (body.quizType === "mixed") {
+      body.quizType = "text";
+    }
     Object.assign(quiz, body);
     quiz.version = (quiz.version || 1) + 1;
     await quiz.save();

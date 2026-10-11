@@ -85,6 +85,7 @@ export async function POST(req: NextRequest) {
 
     const quizData = {
       ...parse.data,
+      quizType: parse.data.quizType === "image" ? "image" : "text",
       status: "draft",
       version: 1,
       isLocked: false,

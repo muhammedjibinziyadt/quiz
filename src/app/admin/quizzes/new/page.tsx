@@ -12,8 +12,6 @@ import {
   Clock,
   Award,
   AlertTriangle,
-  Layers,
-  Image as ImageIcon,
   CheckCircle,
 } from "lucide-react";
 
@@ -22,11 +20,8 @@ export default function NewQuizPage() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [instructions, setInstructions] = useState(
-    "1. All questions are multiple choice.\n2. Do not refresh or close the tab during the quiz.\n3. The quiz will auto-submit once the timer expires."
-  );
-  const [quizType, setQuizType] = useState<"text" | "image">("text");
-  const [durationMinutes, setDurationMinutes] = useState(10);
+  const [durationMinutes, setDurationMinutes] = useState(1);
+  const [durationSecondsInput, setDurationSecondsInput] = useState(0);
   const [marksPerQuestion, setMarksPerQuestion] = useState(2);
   const [negativeMarkingEnabled, setNegativeMarkingEnabled] = useState(false);
   const [negativeMarks, setNegativeMarks] = useState(0.5);
@@ -42,7 +37,10 @@ export default function NewQuizPage() {
     setLoading(true);
 
     try {
-      const durationSeconds = Math.max(10, durationMinutes * 60);
+      const durationSeconds = Math.max(
+        10,
+        (durationMinutes || 0) * 60 + (durationSecondsInput || 0)
+      );
 
       const res = await fetch("/api/admin/quizzes", {
         method: "POST",
@@ -50,8 +48,7 @@ export default function NewQuizPage() {
         body: JSON.stringify({
           title,
           description,
-          instructions,
-          quizType,
+          quizType: "text",
           durationSeconds,
           marksPerQuestion,
           negativeMarkingEnabled,
@@ -121,50 +118,6 @@ export default function NewQuizPage() {
               />
             </div>
 
-            {/* Quiz Type Selector */}
-            <div>
-              <label className="block text-xs font-semibold uppercase text-slate-300 mb-2">
-                Competition Type *
-              </label>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => setQuizType("text")}
-                  className={`p-4 rounded-xl border text-left flex items-start gap-3 transition-all cursor-pointer ${
-                    quizType === "text"
-                      ? "bg-blue-600/20 border-blue-500 text-white fest-glow-blue"
-                      : "bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800"
-                  }`}
-                >
-                  <Layers className="w-5 h-5 text-blue-400 mt-0.5 shrink-0" />
-                  <div>
-                    <h4 className="text-sm font-bold text-white">Text-Based MCQ</h4>
-                    <p className="text-xs text-slate-400 mt-1">
-                      Traditional multiple-choice questions with Malayalam/English text.
-                    </p>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setQuizType("image")}
-                  className={`p-4 rounded-xl border text-left flex items-start gap-3 transition-all cursor-pointer ${
-                    quizType === "image"
-                      ? "bg-purple-600/20 border-purple-500 text-white"
-                      : "bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800"
-                  }`}
-                >
-                  <ImageIcon className="w-5 h-5 text-purple-400 mt-0.5 shrink-0" />
-                  <div>
-                    <h4 className="text-sm font-bold text-white">Image-Based Quiz</h4>
-                    <p className="text-xs text-slate-400 mt-1">
-                      Visual identification questions with uploaded illustration banners and images.
-                    </p>
-                  </div>
-                </button>
-              </div>
-            </div>
-
             {/* Description */}
             <div>
               <label className="block text-xs font-semibold uppercase text-slate-300 mb-2">
@@ -179,33 +132,38 @@ export default function NewQuizPage() {
               />
             </div>
 
-            {/* Instructions */}
-            <div>
-              <label className="block text-xs font-semibold uppercase text-slate-300 mb-2">
-                Instructions for Students
-              </label>
-              <textarea
-                value={instructions}
-                onChange={(e) => setInstructions(e.target.value)}
-                rows={4}
-                className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm font-mono text-xs"
-              />
-            </div>
-
             {/* Timing & Scoring Parameters */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
               <div>
                 <label className="block text-xs font-semibold uppercase text-slate-300 mb-2 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-amber-400" /> Duration (Minutes)
+                  <Clock className="w-3.5 h-3.5 text-amber-400" /> Duration (Min & Sec)
                 </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={300}
-                  value={durationMinutes}
-                  onChange={(e) => setDurationMinutes(parseInt(e.target.value, 10) || 1)}
-                  className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm"
-                />
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min={0}
+                      max={300}
+                      value={durationMinutes}
+                      onChange={(e) => setDurationMinutes(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                      placeholder="0"
+                      className="w-full px-3 py-2.5 pr-7 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm text-center"
+                    />
+                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">m</span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min={0}
+                      max={59}
+                      value={durationSecondsInput}
+                      onChange={(e) => setDurationSecondsInput(Math.min(59, Math.max(0, parseInt(e.target.value, 10) || 0)))}
+                      placeholder="0"
+                      className="w-full px-3 py-2.5 pr-7 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm text-center"
+                    />
+                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">s</span>
+                  </div>
+                </div>
               </div>
 
               <div>

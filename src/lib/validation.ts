@@ -29,7 +29,7 @@ export const QuizCreateSchema = z.object({
   description: z.string().max(2000).optional(),
   instructions: z.string().max(4000).optional(),
   coverImage: z.string().nullable().optional(),
-  quizType: z.enum(["text", "image"]).default("text"),
+  quizType: z.enum(["text", "image", "mixed"]).default("text"),
   durationSeconds: z.coerce.number().min(10, "Duration must be at least 10 seconds").max(86400),
   marksPerQuestion: z.coerce.number().min(0.1, "Marks must be at least 0.1").default(1),
   negativeMarks: z.coerce.number().min(0).default(0),

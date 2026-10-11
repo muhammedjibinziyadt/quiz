@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
-export type QuizType = "text" | "image";
+export type QuizType = "text" | "image" | "mixed";
 export type QuizStatus = "draft" | "published" | "archived";
 
 export interface IQuiz extends Document {
@@ -51,9 +51,7 @@ const QuizSchema: Schema<IQuiz> = new Schema(
     },
     quizType: {
       type: String,
-      enum: ["text", "image"],
       default: "text",
-      required: true,
     },
     startTime: {
       type: Date,
@@ -117,7 +115,14 @@ const QuizSchema: Schema<IQuiz> = new Schema(
   }
 );
 
-QuizSchema.index({ status: 1, startTime: 1, endTime: 1 });
+if (process.env.NODE_ENV !== "production") {
+  if (mongoose.models.Quiz) {
+    delete (mongoose.models as Record<string, unknown>).Quiz;
+  }
+  if (mongoose.connection?.models?.Quiz) {
+    delete (mongoose.connection.models as Record<string, unknown>).Quiz;
+  }
+}
 
 export const Quiz: Model<IQuiz> =
   mongoose.models.Quiz || mongoose.model<IQuiz>("Quiz", QuizSchema);

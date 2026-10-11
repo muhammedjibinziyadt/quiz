@@ -18,7 +18,6 @@ import {
   Globe,
   Lock,
   Layers,
-  Image as ImageIcon,
   Trophy,
 } from "lucide-react";
 
@@ -26,7 +25,7 @@ interface QuizRecord {
   _id: string;
   title: string;
   description?: string;
-  quizType: "text" | "image";
+  quizType: "text" | "image" | "mixed";
   durationSeconds: number;
   marksPerQuestion: number;
   negativeMarkingEnabled: boolean;
@@ -162,22 +161,8 @@ export default function AdminQuizzesListPage() {
                   <div>
                     {/* Header Badges */}
                     <div className="flex items-center justify-between gap-2 mb-3">
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 ${
-                          quiz.quizType === "image"
-                            ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
-                            : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
-                        }`}
-                      >
-                        {quiz.quizType === "image" ? (
-                          <>
-                            <ImageIcon className="w-3 h-3" /> Image Quiz
-                          </>
-                        ) : (
-                          <>
-                            <Layers className="w-3 h-3" /> Text MCQ
-                          </>
-                        )}
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                        <Layers className="w-3 h-3" /> Quiz Competition
                       </span>
 
                       <span

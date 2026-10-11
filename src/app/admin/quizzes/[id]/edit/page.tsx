@@ -49,7 +49,7 @@ interface QuizDetails {
   title: string;
   description?: string;
   instructions?: string;
-  quizType: "text" | "image";
+  quizType: "text" | "image" | "mixed";
   durationSeconds: number;
   marksPerQuestion: number;
   negativeMarkingEnabled: boolean;
@@ -86,8 +86,8 @@ function EditQuizContent({
   // Settings form state
   const [settingsTitle, setSettingsTitle] = useState("");
   const [settingsDescription, setSettingsDescription] = useState("");
-  const [settingsInstructions, setSettingsInstructions] = useState("");
-  const [settingsMinutes, setSettingsMinutes] = useState(10);
+  const [settingsMinutes, setSettingsMinutes] = useState(1);
+  const [settingsSeconds, setSettingsSeconds] = useState(0);
   const [settingsMarks, setSettingsMarks] = useState(2);
   const [settingsNegEnabled, setSettingsNegEnabled] = useState(false);
   const [settingsNegMarks, setSettingsNegMarks] = useState(0.5);
@@ -126,8 +126,8 @@ function EditQuizContent({
       // Populate settings form
       setSettingsTitle(data.quiz.title || "");
       setSettingsDescription(data.quiz.description || "");
-      setSettingsInstructions(data.quiz.instructions || "");
-      setSettingsMinutes(Math.round(data.quiz.durationSeconds / 60));
+      setSettingsMinutes(Math.floor((data.quiz.durationSeconds || 0) / 60));
+      setSettingsSeconds((data.quiz.durationSeconds || 0) % 60);
       setSettingsMarks(data.quiz.marksPerQuestion || 2);
       setSettingsNegEnabled(data.quiz.negativeMarkingEnabled || false);
       setSettingsNegMarks(data.quiz.negativeMarks || 0.5);
@@ -275,8 +275,7 @@ function EditQuizContent({
         body: JSON.stringify({
           title: settingsTitle,
           description: settingsDescription,
-          instructions: settingsInstructions,
-          durationSeconds: Math.max(10, settingsMinutes * 60),
+          durationSeconds: Math.max(10, (settingsMinutes || 0) * 60 + (settingsSeconds || 0)),
           marksPerQuestion: settingsMarks,
           negativeMarkingEnabled: settingsNegEnabled,
           negativeMarks: settingsNegEnabled ? settingsNegMarks : 0,
@@ -377,7 +376,7 @@ function EditQuizContent({
                 )}
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                Version {quiz.version} • {quiz.quizType === "image" ? "Image Quiz" : "Text MCQ"} • {questions.length} questions
+                Version {quiz.version} • {questions.length} questions
               </p>
             </div>
           </div>
@@ -581,30 +580,37 @@ function EditQuizContent({
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
-                  Instructions
-                </label>
-                <textarea
-                  value={settingsInstructions}
-                  onChange={(e) => setSettingsInstructions(e.target.value)}
-                  rows={3}
-                  className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm font-mono text-xs"
-                />
-              </div>
-
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
-                    Duration (Minutes)
+                    Duration (Min & Sec)
                   </label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={settingsMinutes}
-                    onChange={(e) => setSettingsMinutes(parseInt(e.target.value, 10) || 1)}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm"
-                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min={0}
+                        max={300}
+                        value={settingsMinutes}
+                        onChange={(e) => setSettingsMinutes(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                        placeholder="0"
+                        className="w-full px-3 py-2 pr-7 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm text-center"
+                      />
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">m</span>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min={0}
+                        max={59}
+                        value={settingsSeconds}
+                        onChange={(e) => setSettingsSeconds(Math.min(59, Math.max(0, parseInt(e.target.value, 10) || 0)))}
+                        placeholder="0"
+                        className="w-full px-3 py-2 pr-7 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm text-center"
+                      />
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">s</span>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
