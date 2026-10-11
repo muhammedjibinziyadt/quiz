@@ -18,7 +18,7 @@ export default function HomePage() {
     if (videoRef.current) {
       videoRef.current.defaultMuted = true;
       videoRef.current.muted = true;
-      videoRef.current.play().catch(() => {});
+      videoRef.current.play().catch(() => { });
     }
   }, []);
 
@@ -67,7 +67,7 @@ export default function HomePage() {
 
               <div className="h-14 sm:h-20 w-px bg-gradient-to-b from-transparent via-slate-500/50 to-transparent" />
 
-              <div className="relative w-[106px] h-[58px] sm:w-60 sm:h-32 drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)] transition-transform hover:scale-105">
+              <div className="relative w-[125px] h-[68px] sm:w-60 sm:h-32 drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)] transition-transform hover:scale-105">
                 <Image
                   src="/images/nattarivu-quiz-logo.png"
                   alt="നാട്ടറിവ് QUIZ 2026"
@@ -96,7 +96,7 @@ export default function HomePage() {
                 className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-95 shadow-2xl shadow-blue-600/40 transition-all text-base cursor-pointer backdrop-blur-sm"
               >
                 <Trophy className="w-5 h-5 text-amber-300" />
-                <span>Enter Student Quiz</span>
+                <span>Enter for Quiz</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
