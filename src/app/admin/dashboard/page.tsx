@@ -13,10 +13,8 @@ import {
   CheckCircle2,
   Clock,
   Sparkles,
-  ArrowUpRight,
   UserPlus,
   PlusCircle,
-  Activity,
   Radio,
 } from "lucide-react";
 
@@ -29,18 +27,9 @@ interface DashboardStats {
   activeParticipants: number;
 }
 
-interface AuditLogItem {
-  _id: string;
-  action: string;
-  performedBy: string;
-  timestamp: string;
-  details?: Record<string, unknown>;
-}
-
 export default function AdminDashboardPage() {
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [activity, setActivity] = useState<AuditLogItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -56,7 +45,6 @@ export default function AdminDashboardPage() {
         if (statsRes.ok) {
           const data = await statsRes.json();
           setStats(data.stats);
-          setActivity(data.recentActivity || []);
         }
       } catch (err) {
         console.error("Failed to load dashboard stats:", err);
@@ -117,7 +105,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-10">
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <div className="fest-glass rounded-2xl p-5 border border-slate-800 flex flex-col justify-between">
             <div className="flex items-center justify-between text-slate-400 mb-3">
               <span className="text-xs font-semibold uppercase tracking-wider">Students</span>
@@ -193,122 +181,6 @@ export default function AdminDashboardPage() {
                 {loading ? "..." : stats?.completedAttempts ?? 0}
               </span>
               <p className="text-[11px] text-slate-500 mt-1">Scored submissions</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Two-Column Section: Quick Navigation Cards & Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main 2 columns: Section Hub Cards */}
-          <div className="lg:col-span-2 space-y-4">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Activity className="w-5 h-5 text-blue-400" />
-              Administrative Modules
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Link
-                href="/admin/leaderboard"
-                className="fest-glass-interactive rounded-2xl p-6 border border-slate-800 block group"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-3 rounded-xl bg-amber-500/15 text-amber-400">
-                    <Trophy className="w-6 h-6" />
-                  </div>
-                  <ArrowUpRight className="w-5 h-5 text-slate-500 group-hover:text-amber-400 transition-colors" />
-                </div>
-                <h3 className="text-base font-bold text-white mb-1">
-                  Real-time Animated Leaderboard
-                </h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Live podium, rank movement animations (↑/↓), and Recharts charts powered by Pusher Channels.
-                </p>
-              </Link>
-
-              <Link
-                href="/admin/students"
-                className="fest-glass-interactive rounded-2xl p-6 border border-slate-800 block group"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-3 rounded-xl bg-blue-500/15 text-blue-400">
-                    <Users className="w-6 h-6" />
-                  </div>
-                  <ArrowUpRight className="w-5 h-5 text-slate-500 group-hover:text-blue-400 transition-colors" />
-                </div>
-                <h3 className="text-base font-bold text-white mb-1">Student Management</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Individual registration, cryptographic access codes, participation history, and CSV export.
-                </p>
-              </Link>
-
-              <Link
-                href="/admin/quizzes"
-                className="fest-glass-interactive rounded-2xl p-6 border border-slate-800 block group"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-3 rounded-xl bg-purple-500/15 text-purple-400">
-                    <BookOpen className="w-6 h-6" />
-                  </div>
-                  <ArrowUpRight className="w-5 h-5 text-slate-500 group-hover:text-purple-400 transition-colors" />
-                </div>
-                <h3 className="text-base font-bold text-white mb-1">Quiz & Question Builder</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Text and image-based MCQs, timers, negative marking, attempt locks, and image uploads.
-                </p>
-              </Link>
-
-              <Link
-                href="/admin/results"
-                className="fest-glass-interactive rounded-2xl p-6 border border-slate-800 block group"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-3 rounded-xl bg-emerald-500/15 text-emerald-400">
-                    <CheckCircle2 className="w-6 h-6" />
-                  </div>
-                  <ArrowUpRight className="w-5 h-5 text-slate-500 group-hover:text-emerald-400 transition-colors" />
-                </div>
-                <h3 className="text-base font-bold text-white mb-1">Results & Performance Logs</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Complete score breakdowns, correct/wrong counts, completion times, and CSV report downloads.
-                </p>
-              </Link>
-            </div>
-          </div>
-
-          {/* Right 1 column: Recent Activity Audit Stream */}
-          <div className="lg:col-span-1">
-            <h2 className="text-lg font-bold text-white mb-4">Recent System Activity</h2>
-            <div className="fest-glass rounded-2xl p-5 border border-slate-800 space-y-4">
-              {activity.length === 0 ? (
-                <p className="text-xs text-slate-500 text-center py-6">
-                  No recent admin actions logged yet.
-                </p>
-              ) : (
-                activity.map((log) => {
-                  const date = new Date(log.timestamp).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  });
-
-                  return (
-                    <div
-                      key={log._id}
-                      className="flex items-start gap-3 pb-3 border-b border-slate-800/80 last:border-0 last:pb-0 text-xs"
-                    >
-                      <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-slate-200 capitalize">
-                          {log.action.replace(/_/g, " ")}
-                        </p>
-                        <p className="text-[11px] text-slate-400 truncate">
-                          By {log.performedBy}
-                        </p>
-                      </div>
-                      <span className="text-[10px] text-slate-500 shrink-0">{date}</span>
-                    </div>
-                  );
-                })
-              )}
             </div>
           </div>
         </div>

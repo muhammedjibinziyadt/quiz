@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { KeyRound, ArrowRight, AlertCircle, Sparkles, CheckCircle2 } from "lucide-react";
+import { KeyRound, ArrowRight, AlertCircle } from "lucide-react";
 
 export default function StudentLoginPage() {
   const router = useRouter();
@@ -80,15 +80,8 @@ export default function StudentLoginPage() {
               </div>
             </div>
 
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600/10 border border-red-500/30 text-red-400 text-xs font-semibold uppercase tracking-wider mb-2">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              MAERIKA 2K26 Arts Fest
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Student Quiz Entry
-            </h1>
-            <p className="mt-2 text-sm text-slate-400">
-              Enter your exclusive participant access code to unlock your scheduled quiz.
+            <p className="text-sm sm:text-base text-slate-300 font-medium font-malayalam max-w-sm mx-auto leading-relaxed drop-shadow-sm">
+              ക്വിസിൽ പങ്കെടുക്കാൻ നിങ്ങളുടെ ആക്സസ് കോഡ് നൽകുക
             </p>
           </div>
 
@@ -126,10 +119,6 @@ export default function StudentLoginPage() {
                     required
                   />
                 </div>
-                <p className="mt-2 text-[11px] text-slate-400 flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  Access codes are provided by the festival coordinators.
-                </p>
               </div>
 
               <button
@@ -150,18 +139,6 @@ export default function StudentLoginPage() {
                 )}
               </button>
             </form>
-
-            <div className="mt-6 pt-5 border-t border-slate-800 text-center">
-              <p className="text-xs text-slate-400">
-                Organizers or Faculty?{" "}
-                <a
-                  href="/admin/login"
-                  className="text-blue-400 hover:text-blue-300 font-medium underline underline-offset-4"
-                >
-                  Admin Portal Login
-                </a>
-              </p>
-            </div>
           </div>
         </div>
       </main>
