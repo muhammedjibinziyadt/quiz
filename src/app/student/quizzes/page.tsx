@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
@@ -15,6 +15,7 @@ import {
   RotateCcw,
   Sparkles,
   BookOpen,
+  Calendar,
 } from "lucide-react";
 
 interface QuizItem {
@@ -23,6 +24,9 @@ interface QuizItem {
   description?: string;
   coverImage?: string;
   quizType?: "text" | "image" | "mixed";
+  startTime?: string | null;
+  endTime?: string | null;
+  isStarted: boolean;
   durationSeconds: number;
   marksPerQuestion: number;
   negativeMarkingEnabled: boolean;
@@ -47,6 +51,26 @@ export default function StudentQuizzesPage() {
   const [quizzes, setQuizzes] = useState<QuizItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState<number>(Date.now());
+
+  // Auto-refresh clock every 5 seconds to unlock quizzes when start time arrives
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const fetchQuizzes = async () => {
+    try {
+      const quizRes = await fetch("/api/student/quizzes");
+      if (!quizRes.ok) throw new Error("Failed to load available quizzes");
+      const quizData = await quizRes.json();
+      setQuizzes(quizData.quizzes || []);
+    } catch (err: unknown) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -71,6 +95,17 @@ export default function StudentQuizzesPage() {
     }
     loadData();
   }, [router]);
+
+  // Format scheduled time helper
+  const formatScheduledTime = (isoString?: string | null) => {
+    if (!isoString) return "";
+    const date = new Date(isoString);
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#080c14]">
@@ -104,7 +139,7 @@ export default function StudentQuizzesPage() {
               Available Competitions
             </h2>
             <p className="text-xs sm:text-sm text-slate-400">
-              Select an authorized event to participate in the timed evaluation.
+              Select an authorized event to participate once the competition starts.
             </p>
           </div>
         </div>
@@ -138,9 +173,9 @@ export default function StudentQuizzesPage() {
         {!loading && !error && quizzes.length === 0 && (
           <div className="text-center py-16 fest-glass rounded-2xl border border-slate-800 p-8">
             <BookOpen className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-white">No Active Quizzes Available</h3>
+            <h3 className="text-lg font-bold text-white">No Competitions Scheduled Yet</h3>
             <p className="mt-1 text-sm text-slate-400 max-w-md mx-auto">
-              The competition organizers have not published any quizzes yet, or the scheduled contest window has closed. Please check back shortly.
+              The competition organizers have not published any quizzes yet, or the contest window has ended.
             </p>
           </div>
         )}
@@ -153,6 +188,9 @@ export default function StudentQuizzesPage() {
               const seconds = quiz.durationSeconds % 60;
               const formattedDuration = `${minutes > 0 ? `${minutes}m ` : ""}${seconds > 0 ? `${seconds}s` : ""}`;
 
+              // Dynamic check against live time
+              const isStarted = !quiz.startTime || new Date(quiz.startTime).getTime() <= currentTime;
+
               return (
                 <div
                   key={quiz._id}
@@ -161,16 +199,24 @@ export default function StudentQuizzesPage() {
                   <div>
                     {/* Cover or Logo Badge */}
                     <div className="flex items-start justify-between gap-3 mb-4">
-                      <span className="text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                        Live Competition
-                      </span>
+                      {isStarted ? (
+                        <span className="text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                          Live Now
+                        </span>
+                      ) : (
+                        <span className="text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-amber-400" />
+                          Starts at {formatScheduledTime(quiz.startTime)}
+                        </span>
+                      )}
 
                       {quiz.activeAttemptId ? (
                         <span className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
                           <RotateCcw className="w-3 h-3" /> In Progress
                         </span>
                       ) : !quiz.hasAttemptsLeft ? (
-                        <span className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        <span className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
                           <CheckCircle className="w-3 h-3" /> Completed
                         </span>
                       ) : (
@@ -186,6 +232,21 @@ export default function StudentQuizzesPage() {
                     <p className="text-xs text-slate-400 mb-5 line-clamp-3 leading-relaxed">
                       {quiz.description || "Official MAERIKA 2K26 Competition."}
                     </p>
+
+                    {/* Scheduled notice if quiz has not started yet */}
+                    {!isStarted && quiz.startTime && (
+                      <div className="mb-4 p-3 rounded-xl bg-amber-950/30 border border-amber-800/50 flex items-center gap-2.5 text-xs text-amber-300">
+                        <Clock className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
+                        <div>
+                          <p className="font-semibold text-white">
+                            Starts at {formatScheduledTime(quiz.startTime)}
+                          </p>
+                          <p className="text-[11px] text-amber-300/80">
+                            You are registered! Quiz will unlock automatically when start time arrives.
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Metadata Specs */}
                     <div className="grid grid-cols-2 gap-2.5 py-3 border-y border-slate-800/80 mb-6 text-xs text-slate-300">
@@ -225,21 +286,30 @@ export default function StudentQuizzesPage() {
                         <RotateCcw className="w-4 h-4" />
                         <span>Resume In-Progress Quiz</span>
                       </Link>
-                    ) : quiz.hasAttemptsLeft ? (
-                      <Link
-                        href={`/student/quiz/${quiz._id}`}
-                        className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-600/25 transition-all text-sm active:scale-98"
-                      >
-                        <PlayCircle className="w-4 h-4" />
-                        <span>Start Competition</span>
-                      </Link>
-                    ) : (
+                    ) : !quiz.hasAttemptsLeft ? (
                       <Link
                         href={`/student/result/${quiz.lastCompletedAttemptId}`}
                         className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 transition-all text-sm border border-slate-700"
                       >
                         <CheckCircle className="w-4 h-4 text-emerald-400" />
                         <span>View Your Submission</span>
+                      </Link>
+                    ) : !isStarted ? (
+                      <button
+                        type="button"
+                        disabled
+                        className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-slate-400 bg-slate-800/80 border border-slate-700/60 text-sm cursor-not-allowed opacity-80"
+                      >
+                        <Clock className="w-4 h-4 text-amber-400 animate-pulse" />
+                        <span>Starts at {formatScheduledTime(quiz.startTime)}</span>
+                      </button>
+                    ) : (
+                      <Link
+                        href={`/student/quiz/${quiz._id}`}
+                        className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-md shadow-blue-600/25 transition-all text-sm active:scale-98 cursor-pointer"
+                      >
+                        <PlayCircle className="w-4 h-4 text-amber-300" />
+                        <span>Start Competition</span>
                       </Link>
                     )}
                   </div>

@@ -13,6 +13,7 @@ import {
   Award,
   AlertTriangle,
   CheckCircle,
+  Calendar,
 } from "lucide-react";
 
 export default function NewQuizPage() {
@@ -20,6 +21,7 @@ export default function NewQuizPage() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [startTime, setStartTime] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(10);
   const [durationSecondsInput, setDurationSecondsInput] = useState(0);
   const [marksPerQuestion, setMarksPerQuestion] = useState(2);
@@ -55,6 +57,7 @@ export default function NewQuizPage() {
           negativeMarks: negativeMarkingEnabled ? negativeMarks : 0,
           maxAttempts,
           allowReviewAnswers,
+          startTime: startTime ? new Date(startTime).toISOString() : null,
         }),
       });
 
@@ -90,7 +93,7 @@ export default function NewQuizPage() {
               Create New Quiz Competition
             </h1>
             <p className="text-xs text-slate-400">
-              Configure parameters, scoring system, and competition rules.
+              Configure parameters, schedule, scoring system, and competition rules.
             </p>
           </div>
         </div>
@@ -129,6 +132,23 @@ export default function NewQuizPage() {
                 rows={3}
                 placeholder="Festival background, context, or syllabus..."
                 className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm"
+              />
+            </div>
+
+            {/* Schedule Start Time */}
+            <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
+              <label className="block text-xs font-semibold uppercase text-slate-300 flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-blue-400" />
+                <span>Quiz Start Time / ആരംഭ സമയം (Optional)</span>
+              </label>
+              <p className="text-xs text-slate-400">
+                Participants can register beforehand, but can only enter the quiz once this start time arrives. Leave empty for immediate entry.
+              </p>
+              <input
+                type="datetime-local"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="w-full sm:w-80 px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
 

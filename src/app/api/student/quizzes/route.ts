@@ -16,19 +16,12 @@ export async function GET() {
 
     const now = new Date();
 
-    // Query published quizzes that are currently active or unscheduled
+    // Query published quizzes that haven't ended yet (includes upcoming and active quizzes)
     const quizzes = await Quiz.find({
       status: "published",
-      $and: [
-        {
-          $or: [{ startTime: null }, { startTime: { $lte: now } }],
-        },
-        {
-          $or: [{ endTime: null }, { endTime: { $gte: now } }],
-        },
-      ],
+      $or: [{ endTime: null }, { endTime: { $gte: now } }],
     })
-      .sort({ createdAt: -1 })
+      .sort({ startTime: 1, createdAt: -1 })
       .lean();
 
     const quizIds = quizzes.map((q) => q._id);
@@ -64,6 +57,7 @@ export async function GET() {
       const completedCount = studentQuizAttempts.filter((a) => a.isCompleted).length;
       const activeAttempt = studentQuizAttempts.find((a) => !a.isCompleted);
       const hasAttemptsLeft = completedCount < quiz.maxAttempts;
+      const isStarted = !quiz.startTime || new Date(quiz.startTime).getTime() <= now.getTime();
 
       return {
         _id: quiz._id,
@@ -71,6 +65,9 @@ export async function GET() {
         description: quiz.description,
         coverImage: quiz.coverImage,
         quizType: quiz.quizType,
+        startTime: quiz.startTime ? new Date(quiz.startTime).toISOString() : null,
+        endTime: quiz.endTime ? new Date(quiz.endTime).toISOString() : null,
+        isStarted,
         durationSeconds: quiz.durationSeconds,
         marksPerQuestion: quiz.marksPerQuestion,
         negativeMarkingEnabled: quiz.negativeMarkingEnabled,

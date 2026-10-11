@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Printer, ArrowLeft, RefreshCw, FileText } from "lucide-react";
 
 interface StudentRecord {
@@ -9,10 +10,10 @@ interface StudentRecord {
   name: string;
   phone: string;
   place: string;
-  accessCodePrefix: string;
 }
 
 export default function StudentPrintA4Page() {
+  const router = useRouter();
   const [students, setStudents] = useState<StudentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +24,10 @@ export default function StudentPrintA4Page() {
     setError(null);
     try {
       const res = await fetch("/api/admin/students?limit=2000");
+      if (res.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
       if (!res.ok) {
         throw new Error("Failed to load students data");
       }
@@ -57,7 +62,7 @@ export default function StudentPrintA4Page() {
             <div>
               <h1 className="text-sm font-bold text-white flex items-center gap-2">
                 <FileText className="w-4 h-4 text-amber-400" />
-                <span>A4 Student Code Sheet Preview</span>
+                <span>A4 Student Attendance Sheet Preview</span>
               </h1>
               <p className="text-[11px] text-slate-400">
                 {students.length} registered students loaded
@@ -100,7 +105,7 @@ export default function StudentPrintA4Page() {
         {loading ? (
           <div className="text-center py-24 text-slate-400 print:hidden">
             <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-3 text-blue-400" />
-            <p className="text-sm font-medium">Generating A4 Student Code Sheet...</p>
+            <p className="text-sm font-medium">Generating A4 Student Sheet...</p>
           </div>
         ) : error ? (
           <div className="text-center py-24 text-red-400 print:hidden">
@@ -121,7 +126,7 @@ export default function StudentPrintA4Page() {
               </h1>
             </div>
 
-            {/* Table matching the exact format from user image */}
+            {/* Table matching the 4 columns: No, Name, Number, Place */}
             <div className="w-full overflow-x-auto print:overflow-visible">
               <table className="w-full border-collapse border border-black text-black">
                 <thead>
@@ -129,17 +134,14 @@ export default function StudentPrintA4Page() {
                     <th className="border border-black px-3 py-2 text-center text-xs sm:text-sm font-bold w-[8%]">
                       No
                     </th>
-                    <th className="border border-black px-3 py-2 text-left text-xs sm:text-sm font-bold w-[34%]">
+                    <th className="border border-black px-3 py-2 text-left text-xs sm:text-sm font-bold w-[40%]">
                       Name
                     </th>
-                    <th className="border border-black px-3 py-2 text-left text-xs sm:text-sm font-bold w-[22%]">
+                    <th className="border border-black px-3 py-2 text-left text-xs sm:text-sm font-bold w-[26%]">
                       Number
                     </th>
-                    <th className="border border-black px-3 py-2 text-left text-xs sm:text-sm font-bold w-[22%]">
+                    <th className="border border-black px-3 py-2 text-left text-xs sm:text-sm font-bold w-[26%]">
                       Place
-                    </th>
-                    <th className="border border-black px-3 py-2 text-center text-xs sm:text-sm font-bold w-[14%]">
-                      Code
                     </th>
                   </tr>
                 </thead>
@@ -162,9 +164,6 @@ export default function StudentPrintA4Page() {
                       <td className="border border-black px-3 py-1.5 text-left text-xs sm:text-sm">
                         {student.place}
                       </td>
-                      <td className="border border-black px-3 py-1.5 text-center text-xs sm:text-sm font-mono font-bold tracking-wider">
-                        {student.accessCodePrefix}
-                      </td>
                     </tr>
                   ))}
 
@@ -176,7 +175,6 @@ export default function StudentPrintA4Page() {
                         <td className="border border-black px-3 py-1.5 text-center text-xs sm:text-sm text-slate-400 print:text-black">
                           {rowNum}
                         </td>
-                        <td className="border border-black px-3 py-1.5" />
                         <td className="border border-black px-3 py-1.5" />
                         <td className="border border-black px-3 py-1.5" />
                         <td className="border border-black px-3 py-1.5" />

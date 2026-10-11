@@ -19,6 +19,7 @@ import {
   Lock,
   Layers,
   Trophy,
+  Calendar,
 } from "lucide-react";
 
 interface QuizRecord {
@@ -26,6 +27,8 @@ interface QuizRecord {
   title: string;
   description?: string;
   quizType: "text" | "image" | "mixed";
+  startTime?: string | null;
+  endTime?: string | null;
   durationSeconds: number;
   marksPerQuestion: number;
   negativeMarkingEnabled: boolean;
@@ -185,9 +188,25 @@ export default function AdminQuizzesListPage() {
                     <h3 className="text-lg font-bold text-white mb-2 line-clamp-2 leading-snug">
                       {quiz.title}
                     </h3>
-                    <p className="text-xs text-slate-400 mb-4 line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-slate-400 mb-3 line-clamp-2 leading-relaxed">
                       {quiz.description || "No description provided."}
                     </p>
+
+                    {quiz.startTime && (
+                      <div className="flex items-center gap-1.5 text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1.5 rounded-lg mb-4">
+                        <Calendar className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span>
+                          Starts:{" "}
+                          {new Date(quiz.startTime).toLocaleString([], {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          })}
+                        </span>
+                      </div>
+                    )}
 
                     {/* Metadata Grid */}
                     <div className="grid grid-cols-2 gap-2 py-3 border-y border-slate-800 text-xs text-slate-300 mb-5">

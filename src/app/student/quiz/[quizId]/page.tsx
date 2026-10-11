@@ -281,19 +281,45 @@ function QuizRunnerContent({
   }
 
   if (error || !quiz || questions.length === 0) {
+    const isWaitingStart = error?.toLowerCase().includes("not started yet");
+
     return (
       <div className="min-h-screen bg-[#080c14] flex flex-col items-center justify-center p-6 text-center">
-        <div className="p-4 rounded-full bg-red-950/40 border border-red-800 text-red-400 mb-4">
-          <AlertTriangle className="w-10 h-10" />
-        </div>
-        <h2 className="text-2xl font-bold text-white mb-2">Unable to Load Quiz</h2>
-        <p className="text-slate-400 max-w-md mb-6">{error || "No questions found for this quiz."}</p>
-        <button
-          onClick={() => router.push("/student/quizzes")}
-          className="px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm transition-colors cursor-pointer"
+        <div
+          className={`p-4 rounded-full border mb-4 ${
+            isWaitingStart
+              ? "bg-amber-950/40 border-amber-800 text-amber-400"
+              : "bg-red-950/40 border-red-800 text-red-400"
+          }`}
         >
-          Back to Quizzes
-        </button>
+          {isWaitingStart ? (
+            <Clock className="w-10 h-10 animate-pulse" />
+          ) : (
+            <AlertTriangle className="w-10 h-10" />
+          )}
+        </div>
+        <h2 className="text-2xl font-bold text-white mb-2">
+          {isWaitingStart ? "Quiz Has Not Started Yet" : "Unable to Load Quiz"}
+        </h2>
+        <p className="text-slate-400 max-w-md mb-6 leading-relaxed">
+          {error || "No questions found for this quiz."}
+        </p>
+        <div className="flex items-center gap-3">
+          {isWaitingStart && (
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-colors cursor-pointer shadow-lg shadow-blue-600/30"
+            >
+              Check Again
+            </button>
+          )}
+          <button
+            onClick={() => router.push("/student/quizzes")}
+            className="px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm transition-colors cursor-pointer"
+          >
+            Back to Dashboard
+          </button>
+        </div>
       </div>
     );
   }

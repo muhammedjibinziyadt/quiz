@@ -4,8 +4,8 @@ export interface IStudent extends Document {
   name: string;
   phone: string;
   place: string;
-  accessCodeHash: string;
-  accessCodePrefix: string;
+  accessCodeHash?: string | null;
+  accessCodePrefix?: string | null;
   isActive: boolean;
   notes?: string;
   createdAt: Date;
@@ -34,15 +34,16 @@ const StudentSchema: Schema<IStudent> = new Schema(
     },
     accessCodeHash: {
       type: String,
-      required: [true, "Access code hash is required"],
-      unique: true,
+      required: false,
+      sparse: true,
+      default: null,
       index: true,
     },
     accessCodePrefix: {
       type: String,
-      required: true,
+      required: false,
+      default: "REG",
       trim: true,
-      index: true,
     },
     isActive: {
       type: Boolean,
@@ -62,6 +63,16 @@ const StudentSchema: Schema<IStudent> = new Schema(
 
 // Compound index for fast student search across fields
 StudentSchema.index({ name: "text", place: "text", phone: "text" });
+
+// Prevent Mongoose model caching stale schema in development
+if (process.env.NODE_ENV !== "production") {
+  if (mongoose.models.Student) {
+    delete (mongoose.models as Record<string, unknown>).Student;
+  }
+  if (mongoose.connection?.models?.Student) {
+    delete (mongoose.connection.models as Record<string, unknown>).Student;
+  }
+}
 
 export const Student: Model<IStudent> =
   mongoose.models.Student || mongoose.model<IStudent>("Student", StudentSchema);

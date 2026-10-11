@@ -11,6 +11,17 @@ export const StudentCreateSchema = z.object({
   notes: z.string().max(500).optional(),
 });
 
+export const StudentSelfRegisterSchema = z.object({
+  name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
+  phone: z
+    .string()
+    .trim()
+    .min(7, "Phone number must be at least 7 digits")
+    .max(15, "Phone number too long")
+    .regex(/^[0-9+\-\s()]+$/, "Invalid phone number format"),
+  place: z.string().trim().min(2, "Place must be at least 2 characters").max(100),
+});
+
 export const StudentUpdateSchema = z.object({
   name: z.string().min(2).max(100).optional(),
   phone: z

@@ -5,47 +5,70 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { KeyRound, ArrowRight, AlertCircle } from "lucide-react";
+import {
+  User,
+  Phone,
+  MapPin,
+  ArrowRight,
+  AlertCircle,
+  Trophy,
+} from "lucide-react";
 
 export default function StudentLoginPage() {
   const router = useRouter();
-  const [accessCode, setAccessCode] = useState("");
+
+  // Registration form fields
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [place, setPlace] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Handle Self Registration
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    const cleanCode = accessCode.trim().replace(/[^0-9]/g, "");
-    if (!cleanCode) {
-      setError("Please enter your 4-digit student code.");
+    const cleanName = name.trim();
+    const cleanPhone = phone.trim();
+    const cleanPlace = place.trim();
+
+    if (!cleanName || cleanName.length < 2) {
+      setError("Please enter your full name (minimum 2 characters).");
       return;
     }
-    if (cleanCode.length !== 4) {
-      setError("Access code must be 4 numbers only (e.g. 4829).");
+    if (!cleanPhone || cleanPhone.replace(/[^0-9]/g, "").length < 7) {
+      setError("Please enter a valid phone number (at least 7 digits).");
+      return;
+    }
+    if (!cleanPlace || cleanPlace.length < 2) {
+      setError("Please enter your place or location.");
       return;
     }
 
     setLoading(true);
     try {
-      const res = await fetch("/api/student/auth/login", {
+      const res = await fetch("/api/student/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accessCode: cleanCode }),
+        body: JSON.stringify({
+          name: cleanName,
+          phone: cleanPhone,
+          place: cleanPlace,
+        }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Failed to log in");
+        throw new Error(data.error || "Failed to register");
       }
 
-      // Redirect to student quizzes
+      // Successfully registered/logged in and session cookie set; redirect to available quizzes
       router.push("/student/quizzes");
       router.refresh();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Invalid access code. Please try again.";
-      setError(msg);
+      setError(err instanceof Error ? err.message : "Error during registration. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -55,13 +78,13 @@ export default function StudentLoginPage() {
     <div className="min-h-screen flex flex-col bg-[#080c14]">
       <Header />
 
-      <main className="flex-1 flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8 relative overflow-hidden">
+      <main className="flex-1 flex items-center justify-center px-4 py-10 sm:px-6 lg:px-8 relative overflow-hidden">
         {/* Subtle decorative background glows */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-gradient-to-tr from-blue-600/15 via-red-600/10 to-amber-500/10 blur-3xl -z-10 rounded-full pointer-events-none" />
 
         <div className="w-full max-w-md">
           {/* Brand Header */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <div className="flex items-center justify-center gap-6 mb-4">
               <div className="relative w-20 h-24 drop-shadow-md">
                 <Image
@@ -85,65 +108,80 @@ export default function StudentLoginPage() {
             </div>
 
             <p className="text-sm sm:text-base text-slate-300 font-medium font-malayalam max-w-sm mx-auto leading-relaxed drop-shadow-sm">
-              ക്വിസിൽ പങ്കെടുക്കാൻ നിങ്ങളുടെ 4-അക്ക കോഡ് നൽകുക
+              ക്വിസിൽ പങ്കെടുക്കാൻ വിവരങ്ങൾ നൽകുക
             </p>
           </div>
 
-          {/* Login Card */}
+          {/* Form Card */}
           <div className="fest-glass rounded-2xl p-6 sm:p-8 shadow-2xl border border-slate-800 relative">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {error && (
-                <div className="p-3.5 rounded-xl bg-red-950/40 border border-red-800/60 flex items-start gap-3 text-red-300 text-sm animate-shake">
-                  <AlertCircle className="w-5 h-5 shrink-0 text-red-400 mt-0.5" />
-                  <p className="leading-snug">{error}</p>
-                </div>
-              )}
+            {error && (
+              <div className="p-3.5 rounded-xl bg-red-950/40 border border-red-800/60 flex items-start gap-3 text-red-300 text-sm mb-5 animate-shake">
+                <AlertCircle className="w-5 h-5 shrink-0 text-red-400 mt-0.5" />
+                <p className="leading-snug text-xs sm:text-sm">{error}</p>
+              </div>
+            )}
+
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Full Name *</span>
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Rahul Sharma"
+                  required
+                  className="w-full px-4 py-3 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                />
+              </div>
 
               <div>
-                <label
-                  htmlFor="accessCode"
-                  className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 flex items-center justify-between"
-                >
-                  <span>Student Access Code</span>
-                  <span className="text-[11px] text-amber-400 font-normal">4 Numbers Only</span>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Phone Number *</span>
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                    <KeyRound className="w-5 h-5" />
-                  </div>
-                  <input
-                    id="accessCode"
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={4}
-                    value={accessCode}
-                    onChange={(e) =>
-                      setAccessCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 4))
-                    }
-                    placeholder="e.g. 4829"
-                    autoComplete="one-time-code"
-                    spellCheck="false"
-                    className="w-full pl-11 pr-4 py-3.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 font-mono text-xl text-center tracking-[0.35em] font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                    disabled={loading}
-                    required
-                  />
-                </div>
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="e.g. 98471 23456"
+                  required
+                  className="w-full px-4 py-3 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Place / Location *</span>
+                </label>
+                <input
+                  type="text"
+                  value={place}
+                  onChange={(e) => setPlace(e.target.value)}
+                  placeholder="e.g. Thrissur / കോഴിക്കോട്"
+                  required
+                  className="w-full px-4 py-3 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-3.5 px-5 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.99] shadow-lg shadow-blue-600/30 transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer text-sm sm:text-base"
+                className="w-full mt-2 flex items-center justify-center gap-2 py-3.5 px-5 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.99] shadow-lg shadow-blue-600/30 transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer text-sm sm:text-base"
               >
                 {loading ? (
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Validating Code...</span>
+                    <span>Entering Quiz...</span>
                   </div>
                 ) : (
                   <>
-                    <span>Enter Quiz</span>
+                    <Trophy className="w-4 h-4 text-amber-300" />
+                    <span>Register & Start Quiz</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}

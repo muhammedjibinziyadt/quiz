@@ -1,29 +1,24 @@
 "use client";
 
-import { useEffect, useState, useCallback, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, useCallback, Suspense } from "react";
+import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AdminNav } from "@/components/AdminNav";
 import Link from "next/link";
 import {
   Users,
-  UserPlus,
   Search,
   Filter,
   Download,
   Printer,
-  KeyRound,
   Edit,
   Trash2,
-  RefreshCw,
-  Copy,
-  Check,
   History,
-  AlertTriangle,
   X,
   Phone,
   MapPin,
+  CheckCircle,
 } from "lucide-react";
 
 interface StudentRecord {
@@ -31,7 +26,7 @@ interface StudentRecord {
   name: string;
   phone: string;
   place: string;
-  accessCodePrefix: string;
+  accessCodePrefix?: string | null;
   isActive: boolean;
   notes?: string;
   createdAt: string;
@@ -49,11 +44,8 @@ interface AttemptItem {
   submittedAt: string;
 }
 
-import { Suspense } from "react";
-
 function StudentsContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   // State
   const [students, setStudents] = useState<StudentRecord[]>([]);
@@ -65,20 +57,15 @@ function StudentsContent() {
   const [totalStudents, setTotalStudents] = useState(0);
 
   // Modals
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<StudentRecord | null>(null);
   const [studentHistory, setStudentHistory] = useState<AttemptItem[]>([]);
 
-  // Generated code modal
-  const [newlyGeneratedCode, setNewlyGeneratedCode] = useState<{
-    code: string;
-    studentName: string;
-  } | null>(null);
-  const [copied, setCopied] = useState(false);
+  // Feedback toast / success state
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
-  // Form inputs
+  // Form inputs for editing
   const [formName, setFormName] = useState("");
   const [formPhone, setFormPhone] = useState("");
   const [formPlace, setFormPlace] = useState("");
@@ -113,54 +100,9 @@ function StudentsContent() {
     fetchStudents();
   }, [fetchStudents]);
 
-  // If query parameter action=new, open registration
-  useEffect(() => {
-    if (searchParams.get("action") === "new") {
-      setShowCreateModal(true);
-    }
-  }, [searchParams]);
-
-  // Handle Create Student
-  const handleCreateStudent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError(null);
-    setIsSaving(true);
-
-    try {
-      const res = await fetch("/api/admin/students", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formName,
-          phone: formPhone,
-          place: formPlace,
-          notes: formNotes,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to register student");
-      }
-
-      setShowCreateModal(false);
-      setNewlyGeneratedCode({
-        code: data.rawAccessCode,
-        studentName: formName,
-      });
-
-      // Reset form
-      setFormName("");
-      setFormPhone("");
-      setFormPlace("");
-      setFormNotes("");
-
-      fetchStudents();
-    } catch (err: unknown) {
-      setFormError(err instanceof Error ? err.message : "Error saving student");
-    } finally {
-      setIsSaving(false);
-    }
+  const showNotification = (msg: string) => {
+    setActionSuccess(msg);
+    setTimeout(() => setActionSuccess(null), 3500);
   };
 
   // Handle Edit Student
@@ -190,6 +132,7 @@ function StudentsContent() {
 
       setShowEditModal(false);
       setSelectedStudent(null);
+      showNotification("Student information updated successfully!");
       fetchStudents();
     } catch (err: unknown) {
       setFormError(err instanceof Error ? err.message : "Error updating student");
@@ -207,34 +150,10 @@ function StudentsContent() {
     try {
       const res = await fetch(`/api/admin/students/${studentId}`, { method: "DELETE" });
       if (res.ok) {
+        showNotification(`Deleted student "${name}".`);
         fetchStudents();
       } else {
         alert("Failed to delete student");
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  // Handle Regenerate Access Code
-  const handleResetCode = async (studentId: string, name: string) => {
-    if (!confirm(`Regenerate a new access code for ${name}? Their old code will become invalid.`)) {
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/admin/students/${studentId}/reset-code`, {
-        method: "POST",
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setNewlyGeneratedCode({
-          code: data.rawAccessCode,
-          studentName: name,
-        });
-        fetchStudents();
-      } else {
-        alert(data.error || "Failed to reset code");
       }
     } catch (err) {
       console.error(err);
@@ -258,27 +177,29 @@ function StudentsContent() {
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-[#080c14]">
       <Header isAdmin />
       <AdminNav />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+        {/* Success toast notification */}
+        {actionSuccess && (
+          <div className="mb-6 p-4 rounded-xl bg-emerald-950/60 border border-emerald-800 text-emerald-200 text-sm flex items-center gap-2.5 animate-fade-in shadow-lg">
+            <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+            <span>{actionSuccess}</span>
+          </div>
+        )}
+
         {/* Header Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
               <Users className="w-6 h-6 text-blue-400" />
-              Student Registration & Management
+              Registered Participants
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              Admin-managed participant registry with cryptographically unique access codes.
+              Live registry of self-registered participants. Students register on their own via the festival portal.
             </p>
           </div>
 
@@ -299,21 +220,6 @@ function StudentsContent() {
               <Download className="w-4 h-4 text-blue-400" />
               <span>Export CSV</span>
             </a>
-
-            <button
-              onClick={() => {
-                setFormName("");
-                setFormPhone("");
-                setFormPlace("");
-                setFormNotes("");
-                setFormError(null);
-                setShowCreateModal(true);
-              }}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-md shadow-blue-600/30 transition-all cursor-pointer"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>Register Student</span>
-            </button>
           </div>
         </div>
 
@@ -330,7 +236,7 @@ function StudentsContent() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              placeholder="Search by name, phone, place, prefix..."
+              placeholder="Search by name, phone, place..."
               className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
@@ -362,7 +268,6 @@ function StudentsContent() {
                 <tr>
                   <th className="py-3.5 px-4">Student</th>
                   <th className="py-3.5 px-4">Contact & Location</th>
-                  <th className="py-3.5 px-4">Access Prefix</th>
                   <th className="py-3.5 px-4">Status</th>
                   <th className="py-3.5 px-4">Quizzes Completed</th>
                   <th className="py-3.5 px-4">Highest Score</th>
@@ -372,15 +277,15 @@ function StudentsContent() {
               <tbody className="divide-y divide-slate-800/80">
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-slate-500 text-sm">
+                    <td colSpan={6} className="py-12 text-center text-slate-500 text-sm">
                       <div className="w-6 h-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-2" />
                       Loading student records...
                     </td>
                   </tr>
                 ) : students.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-slate-500 text-sm">
-                      No students found matching your query.
+                    <td colSpan={6} className="py-12 text-center text-slate-500 text-sm">
+                      No registered participants found yet.
                     </td>
                   </tr>
                 ) : (
@@ -403,11 +308,6 @@ function StudentsContent() {
                           <MapPin className="w-3 h-3 text-slate-500" />
                           <span>{s.place}</span>
                         </div>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="font-mono text-xs px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-amber-400 font-bold tracking-wider">
-                          {s.accessCodePrefix}
-                        </span>
                       </td>
                       <td className="py-3.5 px-4">
                         <span
@@ -434,13 +334,6 @@ function StudentsContent() {
                             title="Participation History"
                           >
                             <History className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleResetCode(s._id, s.name)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-slate-800 transition-colors"
-                            title="Regenerate Access Code"
-                          >
-                            <KeyRound className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => {
@@ -500,106 +393,6 @@ function StudentsContent() {
           )}
         </div>
       </main>
-
-      {/* CREATE STUDENT MODAL */}
-      {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="fest-glass rounded-2xl max-w-md w-full p-6 sm:p-8 border border-slate-700 shadow-2xl animate-scale-up">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                <UserPlus className="w-5 h-5 text-blue-400" />
-                Register New Student
-              </h3>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="text-slate-400 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {formError && (
-              <div className="p-3 rounded-xl bg-red-950/40 border border-red-800 text-red-300 text-xs mb-4">
-                {formError}
-              </div>
-            )}
-
-            <form onSubmit={handleCreateStudent} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  placeholder="e.g. Rahul Sharma"
-                  required
-                  className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
-                  Phone Number *
-                </label>
-                <input
-                  type="text"
-                  value={formPhone}
-                  onChange={(e) => setFormPhone(e.target.value)}
-                  placeholder="e.g. +91 98471 23456"
-                  required
-                  className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
-                  Place / Location *
-                </label>
-                <input
-                  type="text"
-                  value={formPlace}
-                  onChange={(e) => setFormPlace(e.target.value)}
-                  placeholder="e.g. Thrissur"
-                  required
-                  className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
-                  Notes / Department (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={formNotes}
-                  onChange={(e) => setFormNotes(e.target.value)}
-                  placeholder="e.g. Dept of Malayalam, Batch 2026"
-                  className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm"
-                />
-              </div>
-
-              <div className="pt-2 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/30"
-                >
-                  {isSaving ? "Generating Code..." : "Register & Generate Code"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* EDIT STUDENT MODAL */}
       {showEditModal && selectedStudent && (
@@ -664,6 +457,18 @@ function StudentsContent() {
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
+                  Notes
+                </label>
+                <input
+                  type="text"
+                  value={formNotes}
+                  onChange={(e) => setFormNotes(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm"
+                />
+              </div>
+
               <div className="flex items-center gap-2 pt-1">
                 <input
                   id="isActive"
@@ -694,43 +499,6 @@ function StudentsContent() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* CODE DISPLAY MODAL (Crucial requirement: show generated code to admin to distribute) */}
-      {newlyGeneratedCode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="fest-glass rounded-2xl max-w-md w-full p-6 sm:p-8 border border-amber-500/40 shadow-2xl animate-scale-up text-center">
-            <div className="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 mx-auto flex items-center justify-center mb-4">
-              <KeyRound className="w-6 h-6" />
-            </div>
-
-            <h3 className="text-xl font-bold text-white mb-1">Generated Student Code (4 Digits)</h3>
-            <p className="text-xs text-slate-400 mb-6">
-              Give this 4-digit code to{" "}
-              <strong className="text-white">{newlyGeneratedCode.studentName}</strong> to log into the quiz.
-            </p>
-
-            <div className="p-4 rounded-2xl bg-slate-900 border border-amber-500/50 flex items-center justify-between gap-3 mb-6">
-              <span className="font-mono text-2xl sm:text-3xl font-black text-amber-400 tracking-[0.25em]">
-                {newlyGeneratedCode.code}
-              </span>
-              <button
-                onClick={() => copyToClipboard(newlyGeneratedCode.code)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-semibold transition-colors"
-              >
-                {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                <span>{copied ? "Copied!" : "Copy"}</span>
-              </button>
-            </div>
-
-            <button
-              onClick={() => setNewlyGeneratedCode(null)}
-              className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm"
-            >
-              Done & Close
-            </button>
           </div>
         </div>
       )}

@@ -24,6 +24,7 @@ import {
   Check,
   X,
   AlertTriangle,
+  Calendar,
 } from "lucide-react";
 
 interface Option {
@@ -50,6 +51,8 @@ interface QuizDetails {
   description?: string;
   instructions?: string;
   quizType: "text" | "image" | "mixed";
+  startTime?: string | null;
+  endTime?: string | null;
   durationSeconds: number;
   marksPerQuestion: number;
   negativeMarkingEnabled: boolean;
@@ -86,6 +89,7 @@ function EditQuizContent({
   // Settings form state
   const [settingsTitle, setSettingsTitle] = useState("");
   const [settingsDescription, setSettingsDescription] = useState("");
+  const [settingsStartTime, setSettingsStartTime] = useState("");
   const [settingsMinutes, setSettingsMinutes] = useState(1);
   const [settingsSeconds, setSettingsSeconds] = useState(0);
   const [settingsMarks, setSettingsMarks] = useState(2);
@@ -126,6 +130,11 @@ function EditQuizContent({
       // Populate settings form
       setSettingsTitle(data.quiz.title || "");
       setSettingsDescription(data.quiz.description || "");
+      setSettingsStartTime(
+        data.quiz.startTime
+          ? new Date(data.quiz.startTime).toISOString().slice(0, 16)
+          : ""
+      );
       setSettingsMinutes(Math.floor((data.quiz.durationSeconds || 0) / 60));
       setSettingsSeconds((data.quiz.durationSeconds || 0) % 60);
       setSettingsMarks(data.quiz.marksPerQuestion || 2);
@@ -281,6 +290,7 @@ function EditQuizContent({
           negativeMarks: settingsNegEnabled ? settingsNegMarks : 0,
           maxAttempts: settingsMaxAttempts,
           allowReviewAnswers: settingsAllowReview,
+          startTime: settingsStartTime ? new Date(settingsStartTime).toISOString() : null,
         }),
       });
 
@@ -577,6 +587,23 @@ function EditQuizContent({
                   onChange={(e) => setSettingsDescription(e.target.value)}
                   rows={2}
                   className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm"
+                />
+              </div>
+
+              {/* Schedule Start Time */}
+              <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+                <label className="block text-xs font-semibold uppercase text-slate-300 flex items-center gap-1.5">
+                  <Calendar className="w-4 h-4 text-blue-400" />
+                  <span>Quiz Start Time / ആരംഭ സമയം (Optional)</span>
+                </label>
+                <p className="text-xs text-slate-400">
+                  Participants can register beforehand, but can only enter the quiz once this start time arrives. Leave empty for immediate entry.
+                </p>
+                <input
+                  type="datetime-local"
+                  value={settingsStartTime}
+                  onChange={(e) => setSettingsStartTime(e.target.value)}
+                  className="w-full sm:w-80 px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
 
