@@ -5,12 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AdminNav } from "@/components/AdminNav";
+import Link from "next/link";
 import {
   Users,
   UserPlus,
   Search,
   Filter,
   Download,
+  Printer,
   KeyRound,
   Edit,
   Trash2,
@@ -281,11 +283,20 @@ function StudentsContent() {
           </div>
 
           <div className="flex items-center gap-3">
+            <Link
+              href="/admin/students/print"
+              target="_blank"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs sm:text-sm font-semibold transition-colors"
+            >
+              <Printer className="w-4 h-4 text-amber-400" />
+              <span>Export A4 Sheet</span>
+            </Link>
+
             <a
               href="/api/admin/students/export"
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white text-xs sm:text-sm font-semibold transition-colors"
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-4 h-4 text-blue-400" />
               <span>Export CSV</span>
             </a>
 
@@ -394,8 +405,8 @@ function StudentsContent() {
                         </div>
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className="font-mono text-xs px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-amber-400">
-                          {s.accessCodePrefix}...
+                        <span className="font-mono text-xs px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-amber-400 font-bold tracking-wider">
+                          {s.accessCodePrefix}
                         </span>
                       </td>
                       <td className="py-3.5 px-4">
@@ -695,15 +706,14 @@ function StudentsContent() {
               <KeyRound className="w-6 h-6" />
             </div>
 
-            <h3 className="text-xl font-bold text-white mb-1">Generated Student Access Code</h3>
+            <h3 className="text-xl font-bold text-white mb-1">Generated Student Code (4 Digits)</h3>
             <p className="text-xs text-slate-400 mb-6">
-              Distribute this private code to{" "}
-              <strong className="text-white">{newlyGeneratedCode.studentName}</strong>. The server
-              stores only a secure cryptographic hash.
+              Give this 4-digit code to{" "}
+              <strong className="text-white">{newlyGeneratedCode.studentName}</strong> to log into the quiz.
             </p>
 
             <div className="p-4 rounded-2xl bg-slate-900 border border-amber-500/50 flex items-center justify-between gap-3 mb-6">
-              <span className="font-mono text-xl sm:text-2xl font-black text-amber-400 tracking-wider">
+              <span className="font-mono text-2xl sm:text-3xl font-black text-amber-400 tracking-[0.25em]">
                 {newlyGeneratedCode.code}
               </span>
               <button

@@ -17,9 +17,13 @@ export default function StudentLoginPage() {
     e.preventDefault();
     setError(null);
 
-    const cleanCode = accessCode.trim().toUpperCase();
+    const cleanCode = accessCode.trim().replace(/[^0-9]/g, "");
     if (!cleanCode) {
-      setError("Please enter your unique student access code.");
+      setError("Please enter your 4-digit student code.");
+      return;
+    }
+    if (cleanCode.length !== 4) {
+      setError("Access code must be 4 numbers only (e.g. 4829).");
       return;
     }
 
@@ -81,7 +85,7 @@ export default function StudentLoginPage() {
             </div>
 
             <p className="text-sm sm:text-base text-slate-300 font-medium font-malayalam max-w-sm mx-auto leading-relaxed drop-shadow-sm">
-              ക്വിസിൽ പങ്കെടുക്കാൻ നിങ്ങളുടെ ആക്സസ് കോഡ് നൽകുക
+              ക്വിസിൽ പങ്കെടുക്കാൻ നിങ്ങളുടെ 4-അക്ക കോഡ് നൽകുക
             </p>
           </div>
 
@@ -98,9 +102,10 @@ export default function StudentLoginPage() {
               <div>
                 <label
                   htmlFor="accessCode"
-                  className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2"
+                  className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 flex items-center justify-between"
                 >
-                  Access Code
+                  <span>Student Access Code</span>
+                  <span className="text-[11px] text-amber-400 font-normal">4 Numbers Only</span>
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
@@ -109,12 +114,17 @@ export default function StudentLoginPage() {
                   <input
                     id="accessCode"
                     type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={4}
                     value={accessCode}
-                    onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
-                    placeholder="e.g. MK-ABHI-2026"
-                    autoComplete="off"
+                    onChange={(e) =>
+                      setAccessCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 4))
+                    }
+                    placeholder="e.g. 4829"
+                    autoComplete="one-time-code"
                     spellCheck="false"
-                    className="w-full pl-11 pr-4 py-3.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 font-mono text-base tracking-wider focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all uppercase"
+                    className="w-full pl-11 pr-4 py-3.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 font-mono text-xl text-center tracking-[0.35em] font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     disabled={loading}
                     required
                   />

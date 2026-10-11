@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "10", 10)));
+    const limit = Math.min(2000, Math.max(1, parseInt(searchParams.get("limit") || "10", 10)));
     const search = searchParams.get("q")?.trim() || "";
     const status = searchParams.get("status") || "all";
 
@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
     let isUnique = false;
     let attempts = 0;
 
-    while (!isUnique && attempts < 5) {
+    while (!isUnique && attempts < 25) {
       code = generateStudentAccessCode();
       codeHash = hashAccessCode(code);
       const collision = await Student.findOne({ accessCodeHash: codeHash });
@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
       place,
       notes: notes || "",
       accessCodeHash: codeHash,
-      accessCodePrefix: code.slice(0, 7), // prefix for admin identification
+      accessCodePrefix: code, // 4-digit numeric code
       isActive: true,
     });
 

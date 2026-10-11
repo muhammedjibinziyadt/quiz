@@ -27,20 +27,11 @@ export interface StudentSession {
 }
 
 /**
- * Generates a clean, readable cryptographically random student access code.
- * Format: MK-XXXX-YYYY (e.g. MK-7H9Q-3R2W)
+ * Generates a clean 4-digit numeric student access code (e.g. 4829, 7501).
+ * 4 numbers only as required for easy student entry.
  */
 export function generateStudentAccessCode(): string {
-  const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // exclude 0, 1, I, O to prevent student confusion
-  const getChunk = (len: number) => {
-    const bytes = crypto.randomBytes(len);
-    let result = "";
-    for (let i = 0; i < len; i++) {
-      result += chars[bytes[i] % chars.length];
-    }
-    return result;
-  };
-  return `MK-${getChunk(4)}-${getChunk(4)}`;
+  return crypto.randomInt(1000, 10000).toString();
 }
 
 /**

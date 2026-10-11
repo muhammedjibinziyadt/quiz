@@ -26,7 +26,7 @@ export async function POST(
     const newHash = hashAccessCode(newCode);
 
     student.accessCodeHash = newHash;
-    student.accessCodePrefix = newCode.slice(0, 7);
+    student.accessCodePrefix = newCode;
     await student.save();
 
     await AuditLog.create({
