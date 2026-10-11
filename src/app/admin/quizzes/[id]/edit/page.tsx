@@ -137,7 +137,7 @@ function EditQuizContent({
       );
       setSettingsMinutes(Math.floor((data.quiz.durationSeconds || 0) / 60));
       setSettingsSeconds((data.quiz.durationSeconds || 0) % 60);
-      setSettingsMarks(data.quiz.marksPerQuestion || 2);
+      setSettingsMarks(data.quiz.marksPerQuestion ?? 1);
       setSettingsNegEnabled(data.quiz.negativeMarkingEnabled || false);
       setSettingsNegMarks(data.quiz.negativeMarks || 0.5);
       setSettingsMaxAttempts(data.quiz.maxAttempts || 1);
@@ -646,7 +646,8 @@ function EditQuizContent({
                   </label>
                   <input
                     type="number"
-                    step="0.5"
+                    step="any"
+                    min="0.1"
                     value={settingsMarks}
                     onChange={(e) => setSettingsMarks(parseFloat(e.target.value) || 1)}
                     className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm"
@@ -688,7 +689,8 @@ function EditQuizContent({
                     </label>
                     <input
                       type="number"
-                      step="0.25"
+                      step="any"
+                      min="0"
                       value={settingsNegMarks}
                       onChange={(e) => setSettingsNegMarks(parseFloat(e.target.value) || 0)}
                       className="w-36 px-3 py-1.5 bg-slate-950 border border-slate-700 rounded text-white text-xs"

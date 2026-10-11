@@ -24,7 +24,7 @@ export default function NewQuizPage() {
   const [startTime, setStartTime] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(10);
   const [durationSecondsInput, setDurationSecondsInput] = useState(0);
-  const [marksPerQuestion, setMarksPerQuestion] = useState(2);
+  const [marksPerQuestion, setMarksPerQuestion] = useState(1);
   const [negativeMarkingEnabled, setNegativeMarkingEnabled] = useState(false);
   const [negativeMarks, setNegativeMarks] = useState(0.5);
   const [maxAttempts, setMaxAttempts] = useState(1);
@@ -192,7 +192,7 @@ export default function NewQuizPage() {
                 </label>
                 <input
                   type="number"
-                  step="0.5"
+                  step="any"
                   min="0.1"
                   value={marksPerQuestion}
                   onChange={(e) => setMarksPerQuestion(parseFloat(e.target.value) || 1)}
@@ -239,7 +239,7 @@ export default function NewQuizPage() {
                   </label>
                   <input
                     type="number"
-                    step="0.25"
+                    step="any"
                     min="0"
                     value={negativeMarks}
                     onChange={(e) => setNegativeMarks(parseFloat(e.target.value) || 0)}
