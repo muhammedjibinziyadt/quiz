@@ -64,14 +64,12 @@ const QuizSchema: Schema<IQuiz> = new Schema(
     },
     durationSeconds: {
       type: Number,
-      required: [true, "Duration is required"],
-      min: [5, "Duration must be at least 5 seconds"],
-      default: 600, // 10 minutes default
+      default: 0,
     },
     timeLimitPerQuestion: {
       type: Number,
       default: 10, // 10 seconds per question default
-      min: 0,
+      min: 1,
     },
     marksPerQuestion: {
       type: Number,

@@ -28,6 +28,7 @@ interface Question {
   questionImage?: string;
   options: Option[];
   marks: number;
+  timeLimitSeconds?: number | null;
 }
 
 interface QuizAttemptData {
@@ -42,7 +43,8 @@ interface QuizInfo {
   id: string;
   title: string;
   instructions: string;
-  durationSeconds: number;
+  durationSeconds?: number;
+  timeLimitPerQuestion?: number;
   marksPerQuestion: number;
   negativeMarkingEnabled: boolean;
   negativeMarks: number;
@@ -67,7 +69,7 @@ function QuizRunnerContent({
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
-  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [questionTimeLeft, setQuestionTimeLeft] = useState<number>(10);
   const [submitting, setSubmitting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
@@ -110,17 +112,22 @@ function QuizRunnerContent({
         const firstUnanswered = loadedQuestions.findIndex(
           (q: Question) => !initialAnswers[q._id]
         );
+        let activeIdx = 0;
         if (firstUnanswered !== -1) {
-          setCurrentIndex(firstUnanswered);
+          activeIdx = firstUnanswered;
         } else if (loadedQuestions.length > 0) {
-          setCurrentIndex(loadedQuestions.length - 1);
+          activeIdx = loadedQuestions.length - 1;
         }
+        setCurrentIndex(activeIdx);
 
-        // Compute initial remaining seconds from serverDeadline
-        const deadlineMs = new Date(data.attempt.serverDeadline).getTime();
-        const nowMs = Date.now();
-        const diffSeconds = Math.max(0, Math.floor((deadlineMs - nowMs) / 1000));
-        setTimeLeft(diffSeconds);
+        // Initialize question timer
+        if (loadedQuestions[activeIdx]) {
+          const limit =
+            loadedQuestions[activeIdx].timeLimitSeconds ||
+            data.quiz.timeLimitPerQuestion ||
+            10;
+          setQuestionTimeLeft(limit);
+        }
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Error starting quiz");
       } finally {
@@ -140,25 +147,35 @@ function QuizRunnerContent({
     };
   }, []);
 
-  // Server-authoritative countdown ticker
+  // PER-QUESTION COUNTDOWN TICKER
   useEffect(() => {
-    if (!attempt || submitting) return;
+    if (!attempt || submitting || questions.length === 0) return;
+
+    // Reset countdown to current question's time limit
+    const currentQ = questions[currentIndex];
+    const limit =
+      currentQ?.timeLimitSeconds || quiz?.timeLimitPerQuestion || 10;
+    setQuestionTimeLeft(limit);
 
     const timer = setInterval(() => {
-      const deadlineMs = new Date(attempt.serverDeadline).getTime();
-      const nowMs = Date.now();
-      const diffSeconds = Math.max(0, Math.floor((deadlineMs - nowMs) / 1000));
-      setTimeLeft(diffSeconds);
-
-      if (diffSeconds <= 0 && !hasAutoSubmitted.current) {
-        hasAutoSubmitted.current = true;
-        clearInterval(timer);
-        handleFinalSubmit(true); // Auto-submit on expiry
-      }
+      setQuestionTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          // Question time expired: auto-advance or auto-submit
+          if (currentIndex < questions.length - 1) {
+            setCurrentIndex((curr) => curr + 1);
+          } else if (!hasAutoSubmitted.current) {
+            hasAutoSubmitted.current = true;
+            handleFinalSubmit(true);
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [attempt, submitting]);
+  }, [currentIndex, questions.length, attempt, submitting, quiz?.timeLimitPerQuestion]);
 
   // Furthest question accessible: student cannot skip past an unanswered question
   const firstUnansweredIndex = questions.findIndex(
@@ -327,7 +344,7 @@ function QuizRunnerContent({
   const currentQ = questions[currentIndex];
   const currentAnswer = selectedAnswers[currentQ._id];
   const answeredCount = Object.keys(selectedAnswers).length;
-  const isTimeCritical = timeLeft < 60;
+  const isTimeCritical = questionTimeLeft <= 3;
 
   return (
     <div className="min-h-screen bg-[#080c14] flex flex-col select-none">
@@ -374,20 +391,21 @@ function QuizRunnerContent({
               <Info className="w-5 h-5" />
             </button>
 
-            {/* Countdown Badge */}
+            {/* Countdown Badge for this Question */}
             <div
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border font-mono font-bold text-base sm:text-lg transition-all ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border font-mono font-bold text-sm sm:text-base transition-all ${
                 isTimeCritical
                   ? "bg-red-950/60 border-red-600 text-red-400 animate-pulse shadow-lg shadow-red-900/40"
                   : "bg-slate-900/90 border-slate-700 text-white"
               }`}
+              title="Time limit for current question"
             >
               <Clock
                 className={`w-4 h-4 sm:w-5 sm:h-5 ${
                   isTimeCritical ? "text-red-400 animate-spin" : "text-amber-400"
                 }`}
               />
-              <span>{formatTime(timeLeft)}</span>
+              <span>{questionTimeLeft}s</span>
             </div>
 
             <button
@@ -456,6 +474,30 @@ function QuizRunnerContent({
                 </span>
               )}
             </span>
+          </div>
+
+          {/* Question countdown progress bar */}
+          <div className="w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden mb-5">
+            <div
+              className={`h-full transition-all duration-1000 ease-linear ${
+                questionTimeLeft <= 3
+                  ? "bg-red-500 animate-pulse"
+                  : "bg-gradient-to-r from-blue-500 to-amber-400"
+              }`}
+              style={{
+                width: `${Math.max(
+                  0,
+                  Math.min(
+                    100,
+                    (questionTimeLeft /
+                      (currentQ?.timeLimitSeconds ||
+                        quiz?.timeLimitPerQuestion ||
+                        10)) *
+                      100
+                  )
+                )}%`,
+              }}
+            />
           </div>
 
           {/* Question Text with Malayalam font */}

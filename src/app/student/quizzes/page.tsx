@@ -252,7 +252,7 @@ export default function StudentQuizzesPage() {
                     <div className="grid grid-cols-2 gap-2.5 py-3 border-y border-slate-800/80 mb-6 text-xs text-slate-300">
                       <div className="flex items-center gap-1.5">
                         <Clock className="w-4 h-4 text-amber-400 shrink-0" />
-                        <span>{formattedDuration}</span>
+                        <span>{quiz.timeLimitPerQuestion || 10}s / question</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <HelpCircle className="w-4 h-4 text-blue-400 shrink-0" />

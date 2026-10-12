@@ -25,6 +25,8 @@ import {
   X,
   AlertTriangle,
   Calendar,
+  Clock,
+  Pencil,
 } from "lucide-react";
 
 interface Option {
@@ -43,6 +45,7 @@ interface QuestionItem {
   explanation?: string;
   marks?: number;
   negativeMarks?: number;
+  timeLimitSeconds?: number | null;
 }
 
 interface QuizDetails {
@@ -91,8 +94,7 @@ function EditQuizContent({
   const [settingsTitle, setSettingsTitle] = useState("");
   const [settingsDescription, setSettingsDescription] = useState("");
   const [settingsStartTime, setSettingsStartTime] = useState("");
-  const [settingsMinutes, setSettingsMinutes] = useState(1);
-  const [settingsSeconds, setSettingsSeconds] = useState(0);
+  const [settingsTimePerQ, setSettingsTimePerQ] = useState(10);
   const [settingsMarks, setSettingsMarks] = useState(2);
   const [settingsNegEnabled, setSettingsNegEnabled] = useState(false);
   const [settingsNegMarks, setSettingsNegMarks] = useState(0.5);
@@ -102,8 +104,10 @@ function EditQuizContent({
 
   // Question Modal state
   const [showQuestionModal, setShowQuestionModal] = useState(false);
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [qText, setQText] = useState("");
   const [qImage, setQImage] = useState<string | null>(null);
+  const [qTimeLimitSeconds, setQTimeLimitSeconds] = useState<string | number>("");
   const [qOptions, setQOptions] = useState<Option[]>([
     { id: "opt_1", text: "" },
     { id: "opt_2", text: "" },
@@ -136,8 +140,7 @@ function EditQuizContent({
           ? new Date(data.quiz.startTime).toISOString().slice(0, 16)
           : ""
       );
-      setSettingsMinutes(Math.floor((data.quiz.durationSeconds || 0) / 60));
-      setSettingsSeconds((data.quiz.durationSeconds || 0) % 60);
+      setSettingsTimePerQ(data.quiz.timeLimitPerQuestion ?? 10);
       setSettingsMarks(data.quiz.marksPerQuestion ?? 1);
       setSettingsNegEnabled(data.quiz.negativeMarkingEnabled || false);
       setSettingsNegMarks(data.quiz.negativeMarks || 0.5);
@@ -179,7 +182,45 @@ function EditQuizContent({
     }
   };
 
-  // Save New Question
+  // Open modal to add a fresh question
+  const handleOpenAddQuestion = () => {
+    setEditingQuestionId(null);
+    setQText("");
+    setQImage(null);
+    setQTimeLimitSeconds("");
+    setQOptions([
+      { id: "opt_1", text: "" },
+      { id: "opt_2", text: "" },
+      { id: "opt_3", text: "" },
+      { id: "opt_4", text: "" },
+    ]);
+    setQCorrectId("opt_1");
+    setQExplanation("");
+    setShowQuestionModal(true);
+  };
+
+  // Open modal to edit an existing question
+  const handleOpenEditQuestion = (q: QuestionItem) => {
+    setEditingQuestionId(q._id);
+    setQText(q.questionText || "");
+    setQImage(q.questionImage || null);
+    setQTimeLimitSeconds(q.timeLimitSeconds ?? "");
+    setQOptions(
+      q.options && q.options.length >= 2
+        ? q.options.map((o) => ({ ...o }))
+        : [
+            { id: "opt_1", text: "" },
+            { id: "opt_2", text: "" },
+            { id: "opt_3", text: "" },
+            { id: "opt_4", text: "" },
+          ]
+    );
+    setQCorrectId(q.correctOptionId || "opt_1");
+    setQExplanation(q.explanation || "");
+    setShowQuestionModal(true);
+  };
+
+  // Save Question (Add or Update)
   const handleSaveQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!qText.trim() && !qImage) {
@@ -195,25 +236,38 @@ function EditQuizContent({
 
     setQSaving(true);
     try {
-      const res = await fetch(`/api/admin/quizzes/${quizId}/questions`, {
-        method: "POST",
+      const payload = {
+        questionText: qText,
+        questionImage: qImage,
+        options: filledOptions,
+        correctOptionId: qCorrectId,
+        explanation: qExplanation,
+        timeLimitSeconds:
+          qTimeLimitSeconds !== "" && !isNaN(Number(qTimeLimitSeconds))
+            ? Math.max(1, parseInt(String(qTimeLimitSeconds), 10))
+            : null,
+      };
+
+      const url = editingQuestionId
+        ? `/api/admin/quizzes/${quizId}/questions/${editingQuestionId}`
+        : `/api/admin/quizzes/${quizId}/questions`;
+      const method = editingQuestionId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          questionText: qText,
-          questionImage: qImage,
-          options: filledOptions,
-          correctOptionId: qCorrectId,
-          explanation: qExplanation,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to add question");
+      if (!res.ok) throw new Error(data.error || "Failed to save question");
 
       setShowQuestionModal(false);
       // Reset question modal state
+      setEditingQuestionId(null);
       setQText("");
       setQImage(null);
+      setQTimeLimitSeconds("");
       setQOptions([
         { id: "opt_1", text: "" },
         { id: "opt_2", text: "" },
@@ -285,7 +339,8 @@ function EditQuizContent({
         body: JSON.stringify({
           title: settingsTitle,
           description: settingsDescription,
-          durationSeconds: Math.max(10, (settingsMinutes || 0) * 60 + (settingsSeconds || 0)),
+          durationSeconds: 0,
+          timeLimitPerQuestion: settingsTimePerQ,
           marksPerQuestion: settingsMarks,
           negativeMarkingEnabled: settingsNegEnabled,
           negativeMarks: settingsNegEnabled ? settingsNegMarks : 0,
@@ -434,10 +489,10 @@ function EditQuizContent({
           <div>
             <div className="flex items-center justify-between mb-4">
               <p className="text-xs text-slate-400">
-                Add multiple-choice questions, question images, and configure correct answers.
+                Add multiple-choice questions, question images, and configure time limits for each question.
               </p>
               <button
-                onClick={() => setShowQuestionModal(true)}
+                onClick={handleOpenAddQuestion}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-600/30 cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
@@ -453,7 +508,7 @@ function EditQuizContent({
                   Add questions to make this quiz ready for the competition. Quizzes must have at least one question before publishing.
                 </p>
                 <button
-                  onClick={() => setShowQuestionModal(true)}
+                  onClick={handleOpenAddQuestion}
                   className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold cursor-pointer"
                 >
                   Add First Question
@@ -467,9 +522,15 @@ function EditQuizContent({
                     className="fest-glass rounded-2xl p-5 border border-slate-800 flex flex-col md:flex-row md:items-start justify-between gap-4"
                   >
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
                         <span className="text-xs font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded">
                           #{idx + 1}
+                        </span>
+                        <span className="text-[10px] font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-amber-400" />
+                          {q.timeLimitSeconds
+                            ? `${q.timeLimitSeconds}s (Custom)`
+                            : `${quiz?.timeLimitPerQuestion || 10}s (Default)`}
                         </span>
                         {q.questionImage && (
                           <span className="text-[10px] font-semibold text-purple-300 bg-purple-500/15 border border-purple-500/30 px-2 py-0.5 rounded flex items-center gap-1">
@@ -524,8 +585,15 @@ function EditQuizContent({
                       )}
                     </div>
 
-                    {/* Order & delete buttons */}
+                    {/* Order, edit & delete buttons */}
                     <div className="flex md:flex-col items-center gap-1 shrink-0 pt-2 md:pt-0">
+                      <button
+                        onClick={() => handleOpenEditQuestion(q)}
+                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-blue-600/30 text-slate-300 hover:text-blue-300 cursor-pointer"
+                        title="Edit Question & Time Limit"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
                       <button
                         onClick={() => handleReorder(idx, "up")}
                         disabled={idx === 0}
@@ -605,35 +673,22 @@ function EditQuizContent({
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
-                    Duration (Min & Sec)
+                  <label className="block text-xs font-semibold uppercase text-slate-300 mb-1 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-blue-400" /> Time Per Question *
                   </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min={0}
-                        max={300}
-                        value={settingsMinutes}
-                        onChange={(e) => setSettingsMinutes(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                        placeholder="0"
-                        className="w-full px-3 py-2 pr-7 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm text-center"
-                      />
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">m</span>
-                    </div>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min={0}
-                        max={59}
-                        value={settingsSeconds}
-                        onChange={(e) => setSettingsSeconds(Math.min(59, Math.max(0, parseInt(e.target.value, 10) || 0)))}
-                        placeholder="0"
-                        className="w-full px-3 py-2 pr-7 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm text-center"
-                      />
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">s</span>
-                    </div>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min={1}
+                      max={600}
+                      value={settingsTimePerQ}
+                      onChange={(e) => setSettingsTimePerQ(Math.max(1, parseInt(e.target.value, 10) || 10))}
+                      placeholder="10"
+                      className="w-full px-3 py-2 pr-7 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm"
+                    />
+                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">s</span>
                   </div>
+                  <p className="text-[10px] text-slate-400 mt-1">Default timer for questions</p>
                 </div>
 
                 <div>
@@ -729,7 +784,7 @@ function EditQuizContent({
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <HelpCircle className="w-5 h-5 text-blue-400" />
-                Add New Question
+                {editingQuestionId ? "Edit Question & Time Limit" : "Add New Question"}
               </h3>
               <button
                 onClick={() => setShowQuestionModal(false)}
@@ -740,6 +795,41 @@ function EditQuizContent({
             </div>
 
             <form onSubmit={handleSaveQuestion} className="space-y-4">
+              {/* Question Time Limit */}
+              <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <label className="block text-xs font-semibold uppercase text-slate-300 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Time Limit for this Question (Seconds)</span>
+                    </label>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Set specific seconds for this question, or leave empty to use default ({quiz?.timeLimitPerQuestion || 10}s)
+                    </p>
+                  </div>
+                  <div className="relative w-36">
+                    <input
+                      type="number"
+                      min={1}
+                      max={600}
+                      value={qTimeLimitSeconds}
+                      onChange={(e) =>
+                        setQTimeLimitSeconds(
+                          e.target.value === ""
+                            ? ""
+                            : Math.max(1, parseInt(e.target.value, 10) || 1)
+                        )
+                      }
+                      placeholder={`${quiz?.timeLimitPerQuestion || 10}`}
+                      className="w-full px-3 py-2 pr-7 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm text-center focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">
+                      s
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               {/* Question Text */}
               <div>
                 <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
@@ -844,7 +934,11 @@ function EditQuizContent({
                   disabled={qSaving}
                   className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold"
                 >
-                  {qSaving ? "Saving..." : "Add Question"}
+                  {qSaving
+                    ? "Saving..."
+                    : editingQuestionId
+                    ? "Update Question"
+                    : "Add Question"}
                 </button>
               </div>
             </form>

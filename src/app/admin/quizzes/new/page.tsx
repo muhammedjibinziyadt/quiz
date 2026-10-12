@@ -22,10 +22,8 @@ export default function NewQuizPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [startTime, setStartTime] = useState("");
-  const [durationMinutes, setDurationMinutes] = useState(10);
-  const [durationSecondsInput, setDurationSecondsInput] = useState(0);
-  const [marksPerQuestion, setMarksPerQuestion] = useState(1);
   const [timeLimitPerQuestion, setTimeLimitPerQuestion] = useState(10);
+  const [marksPerQuestion, setMarksPerQuestion] = useState(1);
   const [negativeMarkingEnabled, setNegativeMarkingEnabled] = useState(false);
   const [negativeMarks, setNegativeMarks] = useState(0.5);
   const [maxAttempts, setMaxAttempts] = useState(1);
@@ -40,11 +38,6 @@ export default function NewQuizPage() {
     setLoading(true);
 
     try {
-      const durationSeconds = Math.max(
-        10,
-        (durationMinutes || 0) * 60 + (durationSecondsInput || 0)
-      );
-
       const res = await fetch("/api/admin/quizzes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -52,7 +45,7 @@ export default function NewQuizPage() {
           title,
           description,
           quizType: "text",
-          durationSeconds,
+          durationSeconds: 0,
           timeLimitPerQuestion,
           marksPerQuestion,
           negativeMarkingEnabled,
@@ -155,7 +148,7 @@ export default function NewQuizPage() {
             </div>
 
             {/* Timing & Scoring Parameters */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
               <div>
                 <label className="block text-xs font-semibold uppercase text-slate-300 mb-2 flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-blue-400" /> Time Per Question *
@@ -172,39 +165,9 @@ export default function NewQuizPage() {
                   />
                   <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">s</span>
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1">Each question counts down this time (e.g. 10s)</p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-300 mb-2 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-amber-400" /> Total Duration
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="relative">
-                    <input
-                      type="number"
-                      min={0}
-                      max={300}
-                      value={durationMinutes}
-                      onChange={(e) => setDurationMinutes(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                      placeholder="0"
-                      className="w-full px-3 py-2.5 pr-7 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm text-center"
-                    />
-                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">m</span>
-                  </div>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      min={0}
-                      max={59}
-                      value={durationSecondsInput}
-                      onChange={(e) => setDurationSecondsInput(Math.min(59, Math.max(0, parseInt(e.target.value, 10) || 0)))}
-                      placeholder="0"
-                      className="w-full px-3 py-2.5 pr-7 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm text-center"
-                    />
-                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">s</span>
-                  </div>
-                </div>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Default countdown timer for each question (e.g. 10s, 15s, 30s). Each question can also be set individually.
+                </p>
               </div>
 
               <div>

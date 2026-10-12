@@ -212,9 +212,7 @@ export default function AdminQuizzesListPage() {
                     <div className="grid grid-cols-2 gap-2 py-3 border-y border-slate-800 text-xs text-slate-300 mb-5">
                       <div className="flex items-center gap-1.5">
                         <Clock className="w-3.5 h-3.5 text-amber-400" />
-                        <span>
-                          {mins}m {secs > 0 ? `${secs}s` : ""}
-                        </span>
+                        <span>{quiz.timeLimitPerQuestion || 10}s / question</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <HelpCircle className="w-3.5 h-3.5 text-blue-400" />

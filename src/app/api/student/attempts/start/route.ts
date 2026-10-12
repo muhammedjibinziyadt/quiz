@@ -140,10 +140,11 @@ export async function POST(req: NextRequest) {
     }
 
     const perQSeconds = quiz.timeLimitPerQuestion || 10;
-    const totalAllocatedSeconds = Math.max(
-      quiz.durationSeconds || 0,
-      perQSeconds * questions.length + 60
-    );
+    const totalAllocatedSeconds =
+      questions.reduce((sum, q) => {
+        const qTime = q.timeLimitSeconds || perQSeconds;
+        return sum + qTime;
+      }, 0) + 120; // 2 minutes grace buffer for network latency
 
     const startTime = new Date();
     const serverDeadline = new Date(startTime.getTime() + totalAllocatedSeconds * 1000);
