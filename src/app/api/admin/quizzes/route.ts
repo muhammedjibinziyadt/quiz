@@ -59,9 +59,10 @@ export async function GET() {
     });
 
     return NextResponse.json({ quizzes: enriched });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error fetching quizzes:", error);
-    return NextResponse.json({ error: "Failed to fetch quizzes" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : "Database connection error";
+    return NextResponse.json({ error: `Failed to fetch quizzes: ${msg}`, quizzes: [] }, { status: 500 });
   }
 }
 

@@ -347,13 +347,13 @@ function QuizRunnerContent({
   const isTimeCritical = questionTimeLeft <= 3;
 
   return (
-    <div className="min-h-screen bg-[#080c14] flex flex-col select-none">
+    <div className="min-h-screen bg-[#080c14] flex flex-col select-none overflow-x-hidden w-full">
       {/* Quiz Top Navigation Bar */}
-      <header className="sticky top-0 z-40 bg-[#0a0f1d]/95 backdrop-blur-md border-b border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-40 bg-[#0a0f1d]/95 backdrop-blur-md border-b border-slate-800 w-full">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
           {/* Logo & Quiz Title */}
-          <div className="flex items-center gap-3">
-            <div className="relative w-8 h-10 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <div className="relative w-7 h-8 sm:w-8 sm:h-10 shrink-0">
               <Image
                 src="/images/maerika-arts-fest-logo.png"
                 alt="MAERIKA 2K26"
@@ -361,13 +361,13 @@ function QuizRunnerContent({
                 className="object-contain"
               />
             </div>
-            <div>
-              <h1 className="text-sm sm:text-base font-bold text-white leading-tight line-clamp-1">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xs sm:text-sm md:text-base font-bold text-white leading-tight truncate">
                 {quiz.title}
               </h1>
-              <div className="flex items-center gap-2 text-xs text-slate-400">
-                <span>
-                  Question {currentIndex + 1} of {questions.length}
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-slate-400 mt-0.5">
+                <span className="font-semibold text-slate-300">
+                  Q {currentIndex + 1} of {questions.length}
                 </span>
                 <span>•</span>
                 <span className="text-emerald-400 font-medium">+{currentQ.marks} Marks</span>
@@ -381,41 +381,32 @@ function QuizRunnerContent({
             </div>
           </div>
 
-          {/* Timer Display & Actions */}
-          <div className="flex items-center gap-3 sm:gap-4">
+          {/* Timer Display & Instructions button (NO Submit button here) */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <button
               onClick={() => setShowInstructions(!showInstructions)}
-              className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+              className="p-1.5 sm:p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
               title="View Instructions"
             >
-              <Info className="w-5 h-5" />
+              <Info className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
 
             {/* Countdown Badge for this Question */}
             <div
-              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border font-mono font-bold text-sm sm:text-base transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl border font-mono font-bold text-xs sm:text-sm md:text-base transition-all ${
                 isTimeCritical
-                  ? "bg-red-950/60 border-red-600 text-red-400 animate-pulse shadow-lg shadow-red-900/40"
-                  : "bg-slate-900/90 border-slate-700 text-white"
+                  ? "bg-red-950/70 border-red-500 text-red-300 animate-pulse shadow-md shadow-red-900/40"
+                  : "bg-slate-900/90 border-slate-700 text-amber-300"
               }`}
               title="Time limit for current question"
             >
               <Clock
-                className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${
                   isTimeCritical ? "text-red-400 animate-spin" : "text-amber-400"
                 }`}
               />
               <span>{questionTimeLeft}s</span>
             </div>
-
-            <button
-              onClick={() => setShowConfirmModal(true)}
-              disabled={submitting}
-              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-semibold text-xs sm:text-sm shadow-md shadow-red-600/30 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
-            >
-              <Send className="w-4 h-4" />
-              <span>Submit Quiz</span>
-            </button>
           </div>
         </div>
 
@@ -449,35 +440,35 @@ function QuizRunnerContent({
       )}
 
       {/* Main Workspace */}
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col justify-between">
+      <main className="flex-1 max-w-4xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 md:py-8 flex flex-col justify-between">
         <div
           key={currentQ._id}
-          className="fest-glass rounded-2xl p-6 sm:p-8 border border-slate-800 animate-question-fade"
+          className="fest-glass rounded-2xl p-4 sm:p-6 md:p-8 border border-slate-800 animate-question-fade"
         >
           {/* Question Header */}
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full">
+          <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4">
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full shrink-0">
               Question #{currentIndex + 1}
             </span>
-            <span className="text-xs">
+            <span className="text-[11px] sm:text-xs">
               {currentAnswer ? (
                 <span className="text-emerald-400 font-semibold flex items-center gap-1.5 animate-pulse">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>Answer Selected</span>
                   {currentIndex < questions.length - 1 && (
-                    <span className="text-slate-400 font-normal">→ Next question...</span>
+                    <span className="text-slate-400 font-normal hidden xs:inline">→ Next...</span>
                   )}
                 </span>
               ) : (
                 <span className="text-amber-400/90 font-medium flex items-center gap-1">
-                  Select an option to unlock next
+                  Select option to proceed
                 </span>
               )}
             </span>
           </div>
 
           {/* Question countdown progress bar */}
-          <div className="w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden mb-5">
+          <div className="w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden mb-4 sm:mb-5">
             <div
               className={`h-full transition-all duration-1000 ease-linear ${
                 questionTimeLeft <= 3
@@ -501,13 +492,13 @@ function QuizRunnerContent({
           </div>
 
           {/* Question Text with Malayalam font */}
-          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white leading-relaxed mb-6 font-malayalam">
+          <h2 className="text-base sm:text-lg md:text-xl font-bold text-white leading-relaxed mb-4 sm:mb-6 font-malayalam break-words">
             {currentQ.questionText}
           </h2>
 
           {/* Question Image (if image-based question) */}
           {currentQ.questionImage && (
-            <div className="relative w-full max-w-2xl h-64 sm:h-80 mx-auto rounded-xl overflow-hidden border border-slate-700/80 mb-6 bg-slate-900/50">
+            <div className="relative w-full max-w-xl h-48 sm:h-64 md:h-72 mx-auto rounded-xl overflow-hidden border border-slate-700/80 mb-4 sm:mb-6 bg-slate-900/50">
               <Image
                 src={currentQ.questionImage}
                 alt={`Question ${currentIndex + 1} Image`}
@@ -518,7 +509,7 @@ function QuizRunnerContent({
           )}
 
           {/* Options List */}
-          <div className="space-y-3 sm:space-y-4">
+          <div className="space-y-2.5 sm:space-y-3.5">
             {currentQ.options.map((opt, optIndex) => {
               const isSelected = currentAnswer === opt.id;
               const letter = String.fromCharCode(65 + optIndex); // A, B, C, D
@@ -527,14 +518,14 @@ function QuizRunnerContent({
                 <button
                   key={opt.id}
                   onClick={() => handleSelectOption(opt.id)}
-                  className={`w-full text-left p-4 sm:p-5 rounded-xl border transition-all flex items-start gap-4 cursor-pointer active:scale-[0.99] ${
+                  className={`w-full text-left p-3 sm:p-4 rounded-xl border transition-all flex items-start gap-3 sm:gap-4 cursor-pointer active:scale-[0.99] ${
                     isSelected
                       ? "bg-blue-600/20 border-blue-500 text-white fest-glow-blue ring-1 ring-blue-500/50"
                       : "bg-slate-900/60 border-slate-800 text-slate-200 hover:bg-slate-800/80 hover:border-slate-700"
                   }`}
                 >
                   <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
+                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
                       isSelected
                         ? "bg-blue-600 text-white shadow-md shadow-blue-600/40"
                         : "bg-slate-800 text-slate-400 border border-slate-700"
@@ -543,9 +534,9 @@ function QuizRunnerContent({
                     {letter}
                   </div>
 
-                  <div className="flex-1 font-malayalam text-sm sm:text-base leading-relaxed">
+                  <div className="flex-1 font-malayalam text-xs sm:text-sm md:text-base leading-relaxed break-words min-w-0">
                     {opt.imageUrl && (
-                      <div className="relative w-40 h-24 rounded-lg overflow-hidden border border-slate-700 mb-2">
+                      <div className="relative w-36 h-20 sm:w-40 sm:h-24 rounded-lg overflow-hidden border border-slate-700 mb-2">
                         <Image
                           src={opt.imageUrl}
                           alt={opt.text}
@@ -557,13 +548,13 @@ function QuizRunnerContent({
                     <span>{opt.text}</span>
                   </div>
 
-                  <div className="shrink-0 mt-1">
+                  <div className="shrink-0 mt-0.5 sm:mt-1">
                     <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                      className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center transition-all ${
                         isSelected ? "border-blue-500 bg-blue-500" : "border-slate-600"
                       }`}
                     >
-                      {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                      {isSelected && <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white" />}
                     </div>
                   </div>
                 </button>
@@ -573,46 +564,66 @@ function QuizRunnerContent({
         </div>
 
         {/* Bottom Navigation Buttons */}
-        <div className="flex items-center justify-between gap-4 mt-6 pt-4 border-t border-slate-800">
-          <button
-            onClick={handlePrevious}
-            disabled={currentIndex === 0}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm font-semibold cursor-pointer"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            <span>Previous</span>
-          </button>
+        <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-slate-800">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            <button
+              onClick={handlePrevious}
+              disabled={currentIndex === 0}
+              className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs sm:text-sm font-semibold cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span>Previous</span>
+            </button>
 
-          <div className="flex flex-col items-center">
-            <span className="text-xs font-semibold text-slate-300">
-              {currentIndex + 1} of {questions.length}
-            </span>
-            {!currentAnswer && currentIndex < questions.length - 1 && (
-              <span className="text-[10px] text-amber-400/80 font-medium">Complete to unlock next</span>
+            <div className="flex flex-col items-center text-center px-1">
+              <span className="text-xs font-semibold text-slate-300">
+                {currentIndex + 1} / {questions.length}
+              </span>
+              {!currentAnswer && currentIndex < questions.length - 1 && (
+                <span className="text-[10px] text-amber-400/80 font-medium hidden sm:inline">
+                  Answer to proceed
+                </span>
+              )}
+            </div>
+
+            {currentIndex < questions.length - 1 ? (
+              <button
+                onClick={handleNext}
+                disabled={!currentAnswer || currentIndex >= maxAccessibleIndex}
+                title={!currentAnswer ? "Answer this question to proceed" : "Next question"}
+                className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:border disabled:border-slate-700/60 disabled:text-slate-500 disabled:cursor-not-allowed disabled:shadow-none text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-600/30 transition-all cursor-pointer"
+              >
+                <span>Next</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+                  setShowConfirmModal(true);
+                }}
+                className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs sm:text-sm font-semibold shadow-md shadow-red-600/30 transition-all cursor-pointer"
+              >
+                <Send className="w-4 h-4" />
+                <span>Submit Quiz</span>
+              </button>
             )}
           </div>
 
-          {currentIndex < questions.length - 1 ? (
-            <button
-              onClick={handleNext}
-              disabled={!currentAnswer || currentIndex >= maxAccessibleIndex}
-              title={!currentAnswer ? "Answer this question to proceed" : "Next question"}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:border disabled:border-slate-700/60 disabled:text-slate-500 disabled:cursor-not-allowed disabled:shadow-none text-white text-sm font-semibold shadow-md shadow-blue-600/30 transition-all cursor-pointer"
-            >
-              <span>Next</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          ) : (
-            <button
-              onClick={() => {
-                if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
-                setShowConfirmModal(true);
-              }}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-semibold shadow-md shadow-red-600/30 transition-all cursor-pointer"
-            >
-              <Send className="w-4 h-4" />
-              <span>Submit Quiz</span>
-            </button>
+          {/* Optional finish early link on non-final questions */}
+          {currentIndex < questions.length - 1 && (
+            <div className="text-center mt-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+                  setShowConfirmModal(true);
+                }}
+                className="text-[11px] text-slate-500 hover:text-red-400 transition-colors underline cursor-pointer"
+              >
+                Finish & Submit Early
+              </button>
+            </div>
           )}
         </div>
       </main>
