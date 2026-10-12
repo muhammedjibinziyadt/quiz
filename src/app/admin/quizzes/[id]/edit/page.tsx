@@ -54,6 +54,7 @@ interface QuizDetails {
   startTime?: string | null;
   endTime?: string | null;
   durationSeconds: number;
+  timeLimitPerQuestion?: number;
   marksPerQuestion: number;
   negativeMarkingEnabled: boolean;
   negativeMarks: number;
@@ -371,11 +372,10 @@ function EditQuizContent({
                   {quiz.title}
                 </h1>
                 <span
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                    quiz.status === "published"
-                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                      : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                  }`}
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${quiz.status === "published"
+                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                    : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                    }`}
                 >
                   {quiz.status}
                 </span>
@@ -394,11 +394,10 @@ function EditQuizContent({
           <div className="flex items-center gap-2.5">
             <button
               onClick={handleTogglePublish}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
-                quiz.status === "published"
-                  ? "bg-amber-950/80 text-amber-300 border border-amber-800 hover:bg-amber-900/80"
-                  : "bg-emerald-600 hover:bg-emerald-500 text-white"
-              }`}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${quiz.status === "published"
+                ? "bg-amber-950/80 text-amber-300 border border-amber-800 hover:bg-amber-900/80"
+                : "bg-emerald-600 hover:bg-emerald-500 text-white"
+                }`}
             >
               {quiz.status === "published" ? "Unpublish Quiz" : "Publish Quiz"}
             </button>
@@ -409,11 +408,10 @@ function EditQuizContent({
         <div className="flex items-center gap-2 border-b border-slate-800 mb-6">
           <button
             onClick={() => setActiveTab("questions")}
-            className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
-              activeTab === "questions"
-                ? "border-blue-500 text-blue-400"
-                : "border-transparent text-slate-400 hover:text-slate-200"
-            }`}
+            className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${activeTab === "questions"
+              ? "border-blue-500 text-blue-400"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+              }`}
           >
             <HelpCircle className="w-4 h-4" />
             <span>Questions Builder ({questions.length})</span>
@@ -421,11 +419,10 @@ function EditQuizContent({
 
           <button
             onClick={() => setActiveTab("settings")}
-            className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
-              activeTab === "settings"
-                ? "border-blue-500 text-blue-400"
-                : "border-transparent text-slate-400 hover:text-slate-200"
-            }`}
+            className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${activeTab === "settings"
+              ? "border-blue-500 text-blue-400"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+              }`}
           >
             <Settings className="w-4 h-4" />
             <span>Quiz Settings</span>
@@ -503,11 +500,10 @@ function EditQuizContent({
                           return (
                             <div
                               key={opt.id}
-                              className={`p-2.5 rounded-lg border font-malayalam flex items-center justify-between ${
-                                isCorrect
-                                  ? "bg-emerald-950/30 border-emerald-500/50 text-emerald-200"
-                                  : "bg-slate-900/60 border-slate-800 text-slate-300"
-                              }`}
+                              className={`p-2.5 rounded-lg border font-malayalam flex items-center justify-between ${isCorrect
+                                ? "bg-emerald-950/30 border-emerald-500/50 text-emerald-200"
+                                : "bg-slate-900/60 border-slate-800 text-slate-300"
+                                }`}
                             >
                               <span>{opt.text}</span>
                               {isCorrect && (

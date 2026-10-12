@@ -41,7 +41,8 @@ export const QuizCreateSchema = z.object({
   instructions: z.string().max(4000).optional(),
   coverImage: z.string().nullable().optional(),
   quizType: z.enum(["text", "image", "mixed"]).default("text"),
-  durationSeconds: z.coerce.number().min(10, "Duration must be at least 10 seconds").max(86400),
+  durationSeconds: z.coerce.number().min(5, "Duration must be at least 5 seconds").max(86400),
+  timeLimitPerQuestion: z.coerce.number().min(0).default(10),
   marksPerQuestion: z.coerce.number().min(0.1, "Marks must be at least 0.1").default(1),
   negativeMarks: z.coerce.number().min(0).default(0),
   negativeMarkingEnabled: z.boolean().default(false),
@@ -68,6 +69,7 @@ export const QuestionCreateSchema = z.object({
   explanation: z.string().optional(),
   marks: z.number().nullable().optional(),
   negativeMarks: z.number().nullable().optional(),
+  timeLimitSeconds: z.number().nullable().optional(),
 });
 
 export const StudentLoginSchema = z.object({

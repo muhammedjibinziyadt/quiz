@@ -16,6 +16,7 @@ export interface IQuestion extends Document {
   explanation?: string;
   marks?: number;
   negativeMarks?: number;
+  timeLimitSeconds?: number | null; // null means inherit quiz's timeLimitPerQuestion
   createdAt: Date;
   updatedAt: Date;
 }
@@ -75,6 +76,10 @@ const QuestionSchema: Schema<IQuestion> = new Schema(
     negativeMarks: {
       type: Number,
       default: null, // null means inherit quiz's negativeMarks
+    },
+    timeLimitSeconds: {
+      type: Number,
+      default: null, // null means inherit quiz's timeLimitPerQuestion (e.g. 10s)
     },
   },
   {

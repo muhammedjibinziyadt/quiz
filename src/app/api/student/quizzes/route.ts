@@ -69,6 +69,7 @@ export async function GET() {
         endTime: quiz.endTime ? new Date(quiz.endTime).toISOString() : null,
         isStarted,
         durationSeconds: quiz.durationSeconds,
+        timeLimitPerQuestion: quiz.timeLimitPerQuestion ?? 10,
         marksPerQuestion: quiz.marksPerQuestion,
         negativeMarkingEnabled: quiz.negativeMarkingEnabled,
         negativeMarks: quiz.negativeMarks,

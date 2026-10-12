@@ -93,6 +93,7 @@ export async function POST(req: NextRequest) {
         questionImage: q.questionImage,
         options: q.options,
         marks: q.marks ?? quiz.marksPerQuestion,
+        timeLimitSeconds: q.timeLimitSeconds ?? quiz.timeLimitPerQuestion ?? 10,
       }));
 
       return NextResponse.json({
@@ -109,6 +110,7 @@ export async function POST(req: NextRequest) {
           title: quiz.title,
           instructions: quiz.instructions,
           durationSeconds: quiz.durationSeconds,
+          timeLimitPerQuestion: quiz.timeLimitPerQuestion ?? 10,
           marksPerQuestion: quiz.marksPerQuestion,
           negativeMarkingEnabled: quiz.negativeMarkingEnabled,
           negativeMarks: quiz.negativeMarks,
@@ -132,8 +134,19 @@ export async function POST(req: NextRequest) {
     }
 
     // Create new attempt
+    const questions = await Question.find({ quizId }).sort({ order: 1 }).lean();
+    if (questions.length === 0) {
+      return NextResponse.json({ error: "Quiz has no questions available." }, { status: 400 });
+    }
+
+    const perQSeconds = quiz.timeLimitPerQuestion || 10;
+    const totalAllocatedSeconds = Math.max(
+      quiz.durationSeconds || 0,
+      perQSeconds * questions.length + 60
+    );
+
     const startTime = new Date();
-    const serverDeadline = new Date(startTime.getTime() + quiz.durationSeconds * 1000);
+    const serverDeadline = new Date(startTime.getTime() + totalAllocatedSeconds * 1000);
     const attemptNumber = completedAttemptsCount + 1;
 
     const newAttempt = await QuizAttempt.create({
@@ -154,11 +167,6 @@ export async function POST(req: NextRequest) {
       await quiz.save();
     }
 
-    const questions = await Question.find({ quizId }).sort({ order: 1 }).lean();
-    if (questions.length === 0) {
-      return NextResponse.json({ error: "Quiz has no questions available." }, { status: 400 });
-    }
-
     // SECURITY: Never return correctOptionId or explanation to student before completion
     const sanitizedQuestions = questions.map((q) => ({
       _id: q._id,
@@ -167,6 +175,7 @@ export async function POST(req: NextRequest) {
       questionImage: q.questionImage,
       options: q.options,
       marks: q.marks ?? quiz.marksPerQuestion,
+      timeLimitSeconds: q.timeLimitSeconds ?? quiz.timeLimitPerQuestion ?? 10,
     }));
 
     return NextResponse.json({
@@ -183,6 +192,7 @@ export async function POST(req: NextRequest) {
         title: quiz.title,
         instructions: quiz.instructions,
         durationSeconds: quiz.durationSeconds,
+        timeLimitPerQuestion: quiz.timeLimitPerQuestion ?? 10,
         marksPerQuestion: quiz.marksPerQuestion,
         negativeMarkingEnabled: quiz.negativeMarkingEnabled,
         negativeMarks: quiz.negativeMarks,

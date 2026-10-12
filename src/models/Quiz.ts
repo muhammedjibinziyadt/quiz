@@ -12,6 +12,7 @@ export interface IQuiz extends Document {
   startTime?: Date;
   endTime?: Date;
   durationSeconds: number;
+  timeLimitPerQuestion: number; // Seconds per question (e.g. 10s). All questions countdown each 10s
   marksPerQuestion: number;
   negativeMarks: number;
   negativeMarkingEnabled: boolean;
@@ -64,8 +65,13 @@ const QuizSchema: Schema<IQuiz> = new Schema(
     durationSeconds: {
       type: Number,
       required: [true, "Duration is required"],
-      min: [10, "Duration must be at least 10 seconds"],
+      min: [5, "Duration must be at least 5 seconds"],
       default: 600, // 10 minutes default
+    },
+    timeLimitPerQuestion: {
+      type: Number,
+      default: 10, // 10 seconds per question default
+      min: 0,
     },
     marksPerQuestion: {
       type: Number,

@@ -45,6 +45,7 @@ export async function GET(
         coverImage: quiz.coverImage,
         quizType: quiz.quizType,
         durationSeconds: quiz.durationSeconds,
+        timeLimitPerQuestion: quiz.timeLimitPerQuestion ?? 10,
         marksPerQuestion: quiz.marksPerQuestion,
         negativeMarkingEnabled: quiz.negativeMarkingEnabled,
         negativeMarks: quiz.negativeMarks,

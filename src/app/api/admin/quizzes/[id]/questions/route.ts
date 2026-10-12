@@ -72,6 +72,7 @@ export async function POST(
       explanation: parse.data.explanation || "",
       marks: parse.data.marks ?? null,
       negativeMarks: parse.data.negativeMarks ?? null,
+      timeLimitSeconds: parse.data.timeLimitSeconds ?? null,
     });
 
     // Bump quiz version

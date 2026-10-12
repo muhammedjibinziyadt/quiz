@@ -25,6 +25,7 @@ export default function NewQuizPage() {
   const [durationMinutes, setDurationMinutes] = useState(10);
   const [durationSecondsInput, setDurationSecondsInput] = useState(0);
   const [marksPerQuestion, setMarksPerQuestion] = useState(1);
+  const [timeLimitPerQuestion, setTimeLimitPerQuestion] = useState(10);
   const [negativeMarkingEnabled, setNegativeMarkingEnabled] = useState(false);
   const [negativeMarks, setNegativeMarks] = useState(0.5);
   const [maxAttempts, setMaxAttempts] = useState(1);
@@ -52,6 +53,7 @@ export default function NewQuizPage() {
           description,
           quizType: "text",
           durationSeconds,
+          timeLimitPerQuestion,
           marksPerQuestion,
           negativeMarkingEnabled,
           negativeMarks: negativeMarkingEnabled ? negativeMarks : 0,
@@ -153,10 +155,29 @@ export default function NewQuizPage() {
             </div>
 
             {/* Timing & Scoring Parameters */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
               <div>
                 <label className="block text-xs font-semibold uppercase text-slate-300 mb-2 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-amber-400" /> Duration (Min & Sec)
+                  <Clock className="w-3.5 h-3.5 text-blue-400" /> Time Per Question *
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min={1}
+                    max={600}
+                    value={timeLimitPerQuestion}
+                    onChange={(e) => setTimeLimitPerQuestion(Math.max(1, parseInt(e.target.value, 10) || 10))}
+                    placeholder="10"
+                    className="w-full px-3 py-2.5 pr-7 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm"
+                  />
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">s</span>
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1">Each question counts down this time (e.g. 10s)</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase text-slate-300 mb-2 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-amber-400" /> Total Duration
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="relative">
@@ -202,7 +223,7 @@ export default function NewQuizPage() {
 
               <div>
                 <label className="block text-xs font-semibold uppercase text-slate-300 mb-2">
-                  Max Attempts Per Student
+                  Max Attempts
                 </label>
                 <input
                   type="number"
