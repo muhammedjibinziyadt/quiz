@@ -30,6 +30,7 @@ interface QuizRecord {
   startTime?: string | null;
   endTime?: string | null;
   durationSeconds: number;
+  timeLimitPerQuestion?: number;
   marksPerQuestion: number;
   negativeMarkingEnabled: boolean;
   negativeMarks: number;

@@ -1,5 +1,6 @@
 import { MongoClient } from "mongodb";
 import fs from "fs";
+import path from "path";
 
 if (fs.existsSync(".env.local")) {
   const envContent = fs.readFileSync(".env.local", "utf8");
@@ -17,50 +18,60 @@ if (fs.existsSync(".env.local")) {
 }
 
 const uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/maerika_quiz_2026";
+const targetDatabases = [process.env.MONGODB_DB || "Maerika", "test"];
 
-async function clearDummyData() {
-  console.log("Connecting to MongoDB to remove all dummy/mock data...");
+async function clearAllData() {
+  console.log("Connecting to MongoDB to remove all data, placeholder, and mock data...");
   const client = new MongoClient(uri);
   await client.connect();
 
-  const targetDatabases = ["test", process.env.MONGODB_DB || "Maerika"];
+  const collectionsToClear = [
+    "students",
+    "quizattempts",
+    "auditlogs",
+    "questions",
+    "quizzes",
+    "imagefiles",
+  ];
 
   for (const dbName of targetDatabases) {
     const db = client.db(dbName);
-    const collections = await db.listCollections().toArray();
-    const colNames = collections.map((c) => c.name);
+    const existingCollections = await db.listCollections().toArray();
+    const existingColNames = existingCollections.map((c) => c.name);
 
-    if (colNames.includes("students")) {
-      const res = await db.collection("students").deleteMany({});
-      console.log(`[${dbName}] Removed ${res.deletedCount} dummy students.`);
-    }
-
-    if (colNames.includes("quizattempts")) {
-      const res = await db.collection("quizattempts").deleteMany({});
-      console.log(`[${dbName}] Removed ${res.deletedCount} dummy quiz attempts.`);
-    }
-
-    if (colNames.includes("auditlogs")) {
-      const res = await db.collection("auditlogs").deleteMany({});
-      console.log(`[${dbName}] Removed ${res.deletedCount} test/dummy audit logs.`);
-    }
-
-    if (colNames.includes("questions")) {
-      const res = await db.collection("questions").deleteMany({});
-      console.log(`[${dbName}] Removed ${res.deletedCount} questions.`);
-    }
-
-    if (colNames.includes("quizzes")) {
-      const res = await db.collection("quizzes").deleteMany({});
-      console.log(`[${dbName}] Removed ${res.deletedCount} quizzes.`);
+    console.log(`\n--- Cleaning Database [${dbName}] ---`);
+    for (const colName of collectionsToClear) {
+      if (existingColNames.includes(colName)) {
+        const res = await db.collection(colName).deleteMany({});
+        console.log(`  ✓ [${dbName}.${colName}] Deleted ${res.deletedCount} documents.`);
+      }
     }
   }
 
   await client.close();
-  console.log("✅ All dummy, placeholder, and mock data successfully removed from database.");
+
+  // Clear uploaded placeholder/mock image files in public/uploads
+  const uploadsDir = path.join(process.cwd(), "public", "uploads");
+  if (fs.existsSync(uploadsDir)) {
+    const files = fs.readdirSync(uploadsDir);
+    let deletedUploadsCount = 0;
+    for (const file of files) {
+      if (file === ".gitkeep") continue;
+      const filePath = path.join(uploadsDir, file);
+      try {
+        fs.unlinkSync(filePath);
+        deletedUploadsCount++;
+      } catch (err) {
+        console.warn(`Could not delete upload file ${filePath}:`, err.message);
+      }
+    }
+    console.log(`\n  ✓ [public/uploads] Removed ${deletedUploadsCount} mock/uploaded files.`);
+  }
+
+  console.log("\n✅ All data, mock data, and placeholder data successfully removed from database and disk.");
 }
 
-clearDummyData().catch((err) => {
+clearAllData().catch((err) => {
   console.error("Failed to clear data:", err);
   process.exit(1);
 });

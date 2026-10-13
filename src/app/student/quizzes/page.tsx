@@ -28,6 +28,7 @@ interface QuizItem {
   endTime?: string | null;
   isStarted: boolean;
   durationSeconds: number;
+  timeLimitPerQuestion?: number;
   marksPerQuestion: number;
   negativeMarkingEnabled: boolean;
   negativeMarks: number;
