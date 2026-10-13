@@ -87,17 +87,15 @@ export function evaluateQuizAttempt(
         explanation: q.explanation || "",
       });
     } else {
-      // Incorrect
+      // Incorrect - minus score / negative marking is completely removed
       incorrectCount++;
-      const penalty = quiz.negativeMarkingEnabled ? negMarksForQuestion : 0;
-      totalScore -= penalty;
       answersDetail.push({
         questionId: qId,
         questionText: q.questionText || "",
         selectedOptionId: selectedOption,
         correctOptionId: q.correctOptionId,
         isCorrect: false,
-        marksAwarded: -penalty,
+        marksAwarded: 0,
         explanation: q.explanation || "",
       });
     }
@@ -107,7 +105,7 @@ export function evaluateQuizAttempt(
   const completionTimeSeconds = Math.max(0, rawSeconds);
 
   return {
-    score: Math.round(totalScore * 100) / 100, // clean 2-decimal precision
+    score: Math.max(0, Math.round(totalScore * 100) / 100), // clean non-negative score
     totalPossibleMarks,
     correctCount,
     incorrectCount,

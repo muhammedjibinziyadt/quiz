@@ -8,11 +8,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Send,
-  AlertTriangle,
   Info,
   CheckCircle2,
   HelpCircle,
-  ShieldAlert,
 } from "lucide-react";
 
 interface Option {
@@ -71,7 +69,6 @@ function QuizRunnerContent({
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [questionTimeLeft, setQuestionTimeLeft] = useState<number>(10);
   const [submitting, setSubmitting] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
 
   // Auto-submit guard
@@ -221,8 +218,12 @@ function QuizRunnerContent({
       advanceTimerRef.current = setTimeout(() => {
         setCurrentIndex((prev) => Math.min(questions.length - 1, prev + 1));
       }, 380);
+    } else {
+      // Last question: automatically submit directly without any confirmation popup
+      advanceTimerRef.current = setTimeout(() => {
+        handleFinalSubmit(false, updated);
+      }, 400);
     }
-    // On the ending question, do not auto-submit - let student submit manually when ready
   };
 
   const handlePrevious = () => {
@@ -244,13 +245,16 @@ function QuizRunnerContent({
   };
 
   // Final Submit Handler
-  const handleFinalSubmit = async (isAuto = false) => {
+  const handleFinalSubmit = async (
+    isAuto = false,
+    answersToSubmit?: Record<string, string>
+  ) => {
     if (!attempt || submitting) return;
     setSubmitting(true);
-    setShowConfirmModal(false);
 
     try {
-      const answersArray = Object.entries(selectedAnswers).map(
+      const activeAnswers = answersToSubmit || selectedAnswers;
+      const answersArray = Object.entries(activeAnswers).map(
         ([questionId, selectedOptionId]) => ({
           questionId,
           selectedOptionId,
@@ -371,12 +375,6 @@ function QuizRunnerContent({
                 </span>
                 <span>•</span>
                 <span className="text-emerald-400 font-medium">+{currentQ.marks} Marks</span>
-                {quiz.negativeMarkingEnabled && (
-                  <>
-                    <span>•</span>
-                    <span className="text-red-400 font-medium">-{quiz.negativeMarks} Neg</span>
-                  </>
-                )}
               </div>
             </div>
           </div>
@@ -589,7 +587,7 @@ function QuizRunnerContent({
             {currentIndex < questions.length - 1 ? (
               <button
                 onClick={handleNext}
-                disabled={!currentAnswer || currentIndex >= maxAccessibleIndex}
+                disabled={!currentAnswer || currentIndex >= maxAccessibleIndex || submitting}
                 title={!currentAnswer ? "Answer this question to proceed" : "Next question"}
                 className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:border disabled:border-slate-700/60 disabled:text-slate-500 disabled:cursor-not-allowed disabled:shadow-none text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-600/30 transition-all cursor-pointer"
               >
@@ -600,74 +598,35 @@ function QuizRunnerContent({
               <button
                 onClick={() => {
                   if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
-                  setShowConfirmModal(true);
+                  handleFinalSubmit(false);
                 }}
-                className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs sm:text-sm font-semibold shadow-md shadow-red-600/30 transition-all cursor-pointer"
+                disabled={submitting}
+                className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-60 text-white text-xs sm:text-sm font-semibold shadow-md shadow-red-600/30 transition-all cursor-pointer"
               >
-                <Send className="w-4 h-4" />
-                <span>Submit Quiz</span>
+                {submitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Submitting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    <span>Submit Quiz</span>
+                  </>
+                )}
               </button>
             )}
           </div>
-
-          {/* Optional finish early link on non-final questions */}
-          {currentIndex < questions.length - 1 && (
-            <div className="text-center mt-2.5">
-              <button
-                type="button"
-                onClick={() => {
-                  if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
-                  setShowConfirmModal(true);
-                }}
-                className="text-[11px] text-slate-500 hover:text-red-400 transition-colors underline cursor-pointer"
-              >
-                Finish & Submit Early
-              </button>
-            </div>
-          )}
         </div>
       </main>
 
-      {/* Confirmation Modal */}
-      {showConfirmModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="fest-glass rounded-2xl max-w-md w-full p-6 sm:p-8 border border-slate-700 shadow-2xl animate-scale-up">
-            <div className="flex items-center gap-3 text-amber-400 mb-4">
-              <ShieldAlert className="w-7 h-7" />
-              <h3 className="text-xl font-bold text-white">Confirm Submission</h3>
-            </div>
-
-            <p className="text-sm text-slate-300 mb-6 leading-relaxed">
-              Are you sure you want to finalize and submit your quiz answers? You have completed{" "}
-              <strong className="text-white">{answeredCount}</strong> of{" "}
-              <strong className="text-white">{questions.length}</strong> questions.
-            </p>
-
-            {questions.length - answeredCount > 0 && (
-              <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-800/60 text-amber-300 text-xs mb-6 flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>
-                  You have {questions.length - answeredCount} unanswered questions which will receive zero marks.
-                </span>
-              </div>
-            )}
-
-            <div className="flex items-center justify-end gap-3">
-              <button
-                onClick={() => setShowConfirmModal(false)}
-                disabled={submitting}
-                className="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-sm font-semibold transition-colors cursor-pointer"
-              >
-                Continue Quiz
-              </button>
-              <button
-                onClick={() => handleFinalSubmit(false)}
-                disabled={submitting}
-                className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-semibold shadow-lg shadow-red-600/30 transition-all cursor-pointer"
-              >
-                {submitting ? "Scoring..." : "Yes, Submit Now"}
-              </button>
-            </div>
+      {/* Direct Submitting Screen Overlay */}
+      {submitting && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/85 backdrop-blur-md p-4">
+          <div className="fest-glass rounded-2xl p-6 sm:p-8 border border-slate-700 text-center max-w-sm w-full animate-scale-up shadow-2xl">
+            <div className="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-white mb-1">Submitting Quiz Answers...</h3>
+            <p className="text-xs text-slate-400">Recording results and generating your score.</p>
           </div>
         </div>
       )}

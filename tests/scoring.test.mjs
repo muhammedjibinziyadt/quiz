@@ -48,12 +48,10 @@ function evaluateQuizAttempt(
       });
     } else {
       incorrectCount++;
-      const penalty = quiz.negativeMarkingEnabled ? negMarksForQuestion : 0;
-      totalScore -= penalty;
       answersDetail.push({
         questionId: qId,
         isCorrect: false,
-        marksAwarded: -penalty,
+        marksAwarded: 0,
       });
     }
   }
@@ -101,11 +99,11 @@ test("Scoring System: Perfect Score calculation", () => {
   assert.equal(res.completionTimeSeconds, 40);
 });
 
-test("Scoring System: Negative marking deducted properly when enabled", () => {
+test("Scoring System: Incorrect answers receive 0 marks without minus score", () => {
   const quiz = {
     marksPerQuestion: 2,
-    negativeMarks: 0.5,
-    negativeMarkingEnabled: true,
+    negativeMarks: 0,
+    negativeMarkingEnabled: false,
   };
 
   const questions = [
@@ -124,7 +122,7 @@ test("Scoring System: Negative marking deducted properly when enabled", () => {
 
   const res = evaluateQuizAttempt(quiz, questions, answers, start, end);
 
-  assert.equal(res.score, 1.5); // 2 - 0.5 = 1.5
+  assert.equal(res.score, 2); // 2 + 0 = 2 (no negative deduction)
   assert.equal(res.correctCount, 1);
   assert.equal(res.incorrectCount, 1);
   assert.equal(res.unansweredCount, 0);

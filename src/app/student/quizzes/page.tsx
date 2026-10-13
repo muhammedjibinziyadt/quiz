@@ -264,15 +264,8 @@ export default function StudentQuizzesPage() {
                         <span>+{quiz.marksPerQuestion} Marks / Q</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <AlertTriangle
-                          className={`w-4 h-4 shrink-0 ${quiz.negativeMarkingEnabled ? "text-red-400" : "text-slate-500"
-                            }`}
-                        />
-                        <span>
-                          {quiz.negativeMarkingEnabled
-                            ? `-${quiz.negativeMarks} Neg. Marks`
-                            : "No Negative Mark"}
-                        </span>
+                        <CheckCircle className="w-4 h-4 shrink-0 text-emerald-400" />
+                        <span>No Negative Marking</span>
                       </div>
                     </div>
                   </div>

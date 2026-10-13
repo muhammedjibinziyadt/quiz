@@ -59,8 +59,6 @@ interface QuizDetails {
   durationSeconds: number;
   timeLimitPerQuestion?: number;
   marksPerQuestion: number;
-  negativeMarkingEnabled: boolean;
-  negativeMarks: number;
   maxAttempts: number;
   status: "draft" | "published" | "archived";
   allowReviewAnswers: boolean;
@@ -96,8 +94,6 @@ function EditQuizContent({
   const [settingsStartTime, setSettingsStartTime] = useState("");
   const [settingsTimePerQ, setSettingsTimePerQ] = useState(10);
   const [settingsMarks, setSettingsMarks] = useState(2);
-  const [settingsNegEnabled, setSettingsNegEnabled] = useState(false);
-  const [settingsNegMarks, setSettingsNegMarks] = useState(0.5);
   const [settingsMaxAttempts, setSettingsMaxAttempts] = useState(1);
   const [settingsAllowReview, setSettingsAllowReview] = useState(true);
   const [savingSettings, setSavingSettings] = useState(false);
@@ -142,8 +138,6 @@ function EditQuizContent({
       );
       setSettingsTimePerQ(data.quiz.timeLimitPerQuestion ?? 10);
       setSettingsMarks(data.quiz.marksPerQuestion ?? 1);
-      setSettingsNegEnabled(data.quiz.negativeMarkingEnabled || false);
-      setSettingsNegMarks(data.quiz.negativeMarks || 0.5);
       setSettingsMaxAttempts(data.quiz.maxAttempts || 1);
       setSettingsAllowReview(data.quiz.allowReviewAnswers || false);
     } catch (err: unknown) {
@@ -342,8 +336,8 @@ function EditQuizContent({
           durationSeconds: 0,
           timeLimitPerQuestion: settingsTimePerQ,
           marksPerQuestion: settingsMarks,
-          negativeMarkingEnabled: settingsNegEnabled,
-          negativeMarks: settingsNegEnabled ? settingsNegMarks : 0,
+          negativeMarkingEnabled: false,
+          negativeMarks: 0,
           maxAttempts: settingsMaxAttempts,
           allowReviewAnswers: settingsAllowReview,
           startTime: settingsStartTime ? new Date(settingsStartTime).toISOString() : null,
@@ -719,36 +713,7 @@ function EditQuizContent({
                 </div>
               </div>
 
-              {/* Negative marking */}
-              <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-sm font-semibold text-white">Negative Marking</h4>
-                    <p className="text-xs text-slate-400">Deduct marks for incorrect answers</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={settingsNegEnabled}
-                    onChange={(e) => setSettingsNegEnabled(e.target.checked)}
-                    className="w-4 h-4 rounded text-blue-600 bg-slate-800 border-slate-700"
-                  />
-                </div>
-                {settingsNegEnabled && (
-                  <div className="mt-3">
-                    <label className="block text-xs text-slate-400 mb-1">
-                      Penalty per wrong answer
-                    </label>
-                    <input
-                      type="number"
-                      step="any"
-                      min="0"
-                      value={settingsNegMarks}
-                      onChange={(e) => setSettingsNegMarks(parseFloat(e.target.value) || 0)}
-                      className="w-36 px-3 py-1.5 bg-slate-950 border border-slate-700 rounded text-white text-xs"
-                    />
-                  </div>
-                )}
-              </div>
+
 
               <div className="flex items-center gap-2">
                 <input
