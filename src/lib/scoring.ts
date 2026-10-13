@@ -147,6 +147,7 @@ export async function getQuizLeaderboard(quizId: string): Promise<LeaderboardEnt
     quizId,
     isCompleted: true,
   })
+    .select("studentId score completionTimeSeconds submittedAt")
     .populate("studentId", "name phone place")
     .sort({
       score: -1,

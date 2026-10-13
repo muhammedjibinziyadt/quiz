@@ -3,6 +3,8 @@ import { getStudentSession } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import { QuizAttempt } from "@/models/QuizAttempt";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(
   req: NextRequest,
   context: { params: Promise<{ attemptId: string }> }
@@ -26,51 +28,61 @@ export async function POST(
 
     await connectToDatabase();
 
-    const attempt = await QuizAttempt.findOne({
-      _id: attemptId,
-      studentId: session.studentId,
-      isCompleted: false,
-    });
+    const qIdStr = String(questionId);
+    const optIdStr = String(selectedOptionId);
+    const now = new Date();
+    // 15 seconds grace for network jitter
+    const minDeadline = new Date(now.getTime() - 15000);
 
-    if (!attempt) {
-      return NextResponse.json(
-        { error: "Active attempt not found or already completed" },
-        { status: 404 }
-      );
-    }
-
-    // Check deadline with small 10s grace
-    const now = Date.now();
-    const deadlineMs = new Date(attempt.serverDeadline).getTime() + 10000;
-    if (now > deadlineMs) {
-      return NextResponse.json(
-        { error: "Time has expired. Answers can no longer be modified." },
-        { status: 400 }
-      );
-    }
-
-    // Upsert answer in savedAnswers array
-    const existingIndex = attempt.savedAnswers.findIndex(
-      (ans) => String(ans.questionId) === String(questionId)
+    // 1. Fast atomic update if answer for this question already exists in array
+    const updateResult = await QuizAttempt.updateOne(
+      {
+        _id: attemptId,
+        studentId: session.studentId,
+        isCompleted: false,
+        serverDeadline: { $gte: minDeadline },
+        "savedAnswers.questionId": qIdStr,
+      },
+      {
+        $set: {
+          "savedAnswers.$.selectedOptionId": optIdStr,
+          "savedAnswers.$.savedAt": now,
+        },
+      }
     );
 
-    if (existingIndex > -1) {
-      attempt.savedAnswers[existingIndex].selectedOptionId = selectedOptionId;
-      attempt.savedAnswers[existingIndex].savedAt = new Date();
-    } else {
-      attempt.savedAnswers.push({
-        questionId: String(questionId),
-        selectedOptionId: String(selectedOptionId),
-        savedAt: new Date(),
-      });
+    // 2. If question answer was not yet in savedAnswers array, push it atomically
+    if (updateResult.matchedCount === 0) {
+      const pushResult = await QuizAttempt.updateOne(
+        {
+          _id: attemptId,
+          studentId: session.studentId,
+          isCompleted: false,
+          serverDeadline: { $gte: minDeadline },
+        },
+        {
+          $push: {
+            savedAnswers: {
+              questionId: qIdStr,
+              selectedOptionId: optIdStr,
+              savedAt: now,
+            },
+          },
+        }
+      );
+
+      if (pushResult.matchedCount === 0) {
+        return NextResponse.json(
+          { error: "Active attempt not found or time expired" },
+          { status: 400 }
+        );
+      }
     }
 
-    await attempt.save();
-
-    return NextResponse.json({
-      success: true,
-      savedCount: attempt.savedAnswers.length,
-    });
+    return NextResponse.json(
+      { success: true },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+    );
   } catch (error) {
     console.error("Save answer error:", error);
     return NextResponse.json({ error: "Failed to save answer" }, { status: 500 });

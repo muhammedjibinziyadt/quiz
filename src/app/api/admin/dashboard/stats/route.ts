@@ -6,6 +6,8 @@ import { Quiz } from "@/models/Quiz";
 import { QuizAttempt } from "@/models/QuizAttempt";
 import { AuditLog } from "@/models/AuditLog";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const session = await getAdminSession();
@@ -33,17 +35,20 @@ export async function GET() {
       AuditLog.find({}).sort({ timestamp: -1 }).limit(8).lean(),
     ]);
 
-    return NextResponse.json({
-      stats: {
-        totalRegisteredStudents,
-        totalQuizzes,
-        publishedQuizzes,
-        totalAttempts,
-        completedAttempts,
-        activeParticipants,
+    return NextResponse.json(
+      {
+        stats: {
+          totalRegisteredStudents,
+          totalQuizzes,
+          publishedQuizzes,
+          totalAttempts,
+          completedAttempts,
+          activeParticipants,
+        },
+        recentActivity,
       },
-      recentActivity,
-    });
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+    );
   } catch (error) {
     console.error("Dashboard stats error:", error);
     return NextResponse.json({ error: "Failed to fetch stats" }, { status: 500 });

@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Send,
+  AlertTriangle,
   Info,
   CheckCircle2,
   HelpCircle,

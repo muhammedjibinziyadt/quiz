@@ -6,6 +6,8 @@ import { Question } from "@/models/Question";
 import { QuizAttempt } from "@/models/QuizAttempt";
 import { evaluateQuizAttempt, refreshAndBroadcastLeaderboard } from "@/lib/scoring";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(
   req: NextRequest,
   context: { params: Promise<{ attemptId: string }> }
@@ -35,7 +37,7 @@ export async function POST(
       _id: attemptId,
       studentId: session.studentId,
       isCompleted: false,
-    });
+    }).lean();
 
     if (!attempt) {
       // Check if it was already completed (prevent duplicate submission)
@@ -43,27 +45,35 @@ export async function POST(
         _id: attemptId,
         studentId: session.studentId,
         isCompleted: true,
-      });
+      })
+        .select("_id score")
+        .lean();
 
       if (alreadyCompleted) {
-        return NextResponse.json({
-          success: true,
-          message: "Quiz was already submitted",
-          alreadyCompleted: true,
-          score: alreadyCompleted.score,
-          attemptId: alreadyCompleted._id,
-        });
+        return NextResponse.json(
+          {
+            success: true,
+            message: "Quiz was already submitted",
+            alreadyCompleted: true,
+            score: alreadyCompleted.score,
+            attemptId: alreadyCompleted._id,
+          },
+          { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+        );
       }
 
       return NextResponse.json({ error: "Active attempt not found" }, { status: 404 });
     }
 
-    const quiz = await Quiz.findById(attempt.quizId);
+    // Parallel fetch Quiz and Questions
+    const [quiz, questions] = await Promise.all([
+      Quiz.findById(attempt.quizId).lean(),
+      Question.find({ quizId: attempt.quizId }).lean(),
+    ]);
+
     if (!quiz) {
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
-
-    const questions = await Question.find({ quizId: attempt.quizId }).lean();
 
     // Merge any answers sent in submit request with savedAnswers
     const mergedMap = new Map<string, string>();
@@ -122,36 +132,40 @@ export async function POST(
     );
 
     if (!updatedAttempt) {
-      return NextResponse.json({
-        success: true,
-        message: "Attempt was finalized concurrently",
-        alreadyCompleted: true,
-      });
+      return NextResponse.json(
+        {
+          success: true,
+          message: "Attempt was finalized concurrently",
+          alreadyCompleted: true,
+        },
+        { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+      );
     }
 
-    // Broadcast updated ranking to Admin Leaderboard via Pusher (resilient, non-blocking)
-    try {
-      await refreshAndBroadcastLeaderboard(String(quiz._id));
-    } catch (pushErr) {
+    // Broadcast updated ranking non-blockingly (instant client response)
+    refreshAndBroadcastLeaderboard(String(quiz._id)).catch((pushErr) => {
       console.warn("Pusher broadcast error (submission preserved):", pushErr);
-    }
+    });
 
     // PRIVACY: Return ONLY student's own score and result summary
-    return NextResponse.json({
-      success: true,
-      message: "Quiz submitted successfully!",
-      result: {
-        attemptId: updatedAttempt._id,
-        score: updatedAttempt.score,
-        totalPossibleMarks: updatedAttempt.totalPossibleMarks,
-        correctCount: updatedAttempt.correctCount,
-        incorrectCount: updatedAttempt.incorrectCount,
-        unansweredCount: updatedAttempt.unansweredCount,
-        completionTimeSeconds: updatedAttempt.completionTimeSeconds,
-        submittedAt: updatedAttempt.submittedAt,
-        allowReviewAnswers: quiz.allowReviewAnswers,
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Quiz submitted successfully!",
+        result: {
+          attemptId: updatedAttempt._id,
+          score: updatedAttempt.score,
+          totalPossibleMarks: updatedAttempt.totalPossibleMarks,
+          correctCount: updatedAttempt.correctCount,
+          incorrectCount: updatedAttempt.incorrectCount,
+          unansweredCount: updatedAttempt.unansweredCount,
+          completionTimeSeconds: updatedAttempt.completionTimeSeconds,
+          submittedAt: updatedAttempt.submittedAt,
+          allowReviewAnswers: quiz.allowReviewAnswers,
+        },
       },
-    });
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+    );
   } catch (error) {
     console.error("Submit quiz error:", error);
     return NextResponse.json({ error: "Failed to submit quiz" }, { status: 500 });

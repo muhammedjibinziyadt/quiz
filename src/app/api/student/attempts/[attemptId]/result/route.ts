@@ -4,6 +4,8 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { QuizAttempt } from "@/models/QuizAttempt";
 import { Quiz } from "@/models/Quiz";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
   req: NextRequest,
   context: { params: Promise<{ attemptId: string }> }
@@ -27,24 +29,29 @@ export async function GET(
       return NextResponse.json({ error: "Result not found or not finalized" }, { status: 404 });
     }
 
-    const quiz = await Quiz.findById(attempt.quizId).lean();
+    const quiz = await Quiz.findById(attempt.quizId)
+      .select("title allowReviewAnswers")
+      .lean();
 
     // STRICT PRIVACY ENFORCEMENT:
     // Only return the individual student's own performance summary.
     // Question details only returned if quiz.allowReviewAnswers is enabled.
-    return NextResponse.json({
-      attemptId: attempt._id,
-      quizTitle: quiz?.title || "Quiz Competition",
-      score: attempt.score,
-      totalPossibleMarks: attempt.totalPossibleMarks,
-      correctCount: attempt.correctCount,
-      incorrectCount: attempt.incorrectCount,
-      unansweredCount: attempt.unansweredCount,
-      completionTimeSeconds: attempt.completionTimeSeconds,
-      submittedAt: attempt.submittedAt,
-      allowReviewAnswers: quiz?.allowReviewAnswers || false,
-      answersDetail: quiz?.allowReviewAnswers ? attempt.answersDetail : undefined,
-    });
+    return NextResponse.json(
+      {
+        attemptId: attempt._id,
+        quizTitle: quiz?.title || "Quiz Competition",
+        score: attempt.score,
+        totalPossibleMarks: attempt.totalPossibleMarks,
+        correctCount: attempt.correctCount,
+        incorrectCount: attempt.incorrectCount,
+        unansweredCount: attempt.unansweredCount,
+        completionTimeSeconds: attempt.completionTimeSeconds,
+        submittedAt: attempt.submittedAt,
+        allowReviewAnswers: quiz?.allowReviewAnswers || false,
+        answersDetail: quiz?.allowReviewAnswers ? attempt.answersDetail : undefined,
+      },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+    );
   } catch (error) {
     console.error("Result fetch error:", error);
     return NextResponse.json({ error: "Failed to load result" }, { status: 500 });

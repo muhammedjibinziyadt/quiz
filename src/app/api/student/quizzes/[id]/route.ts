@@ -5,6 +5,8 @@ import { Quiz } from "@/models/Quiz";
 import { Question } from "@/models/Question";
 import { QuizAttempt } from "@/models/QuizAttempt";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -23,18 +25,22 @@ export async function GET(
       return NextResponse.json({ error: "Quiz not found or not published" }, { status: 404 });
     }
 
-    const questionsCount = await Question.countDocuments({ quizId: id });
-    const completedAttempts = await QuizAttempt.countDocuments({
-      quizId: id,
-      studentId: session.studentId,
-      isCompleted: true,
-    });
-
-    const activeAttempt = await QuizAttempt.findOne({
-      quizId: id,
-      studentId: session.studentId,
-      isCompleted: false,
-    }).lean();
+    // Parallel fetch counts and active attempt
+    const [questionsCount, completedAttempts, activeAttempt] = await Promise.all([
+      Question.countDocuments({ quizId: id }),
+      QuizAttempt.countDocuments({
+        quizId: id,
+        studentId: session.studentId,
+        isCompleted: true,
+      }),
+      QuizAttempt.findOne({
+        quizId: id,
+        studentId: session.studentId,
+        isCompleted: false,
+      })
+        .select("_id startTime serverDeadline")
+        .lean(),
+    ]);
 
     return NextResponse.json({
       quiz: {
@@ -61,7 +67,7 @@ export async function GET(
             }
           : null,
       },
-    });
+    }, { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } });
   } catch (error) {
     console.error("Student quiz detail error:", error);
     return NextResponse.json({ error: "Failed to load quiz details" }, { status: 500 });

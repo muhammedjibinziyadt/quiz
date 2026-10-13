@@ -5,6 +5,8 @@ import { Quiz } from "@/models/Quiz";
 import { Question } from "@/models/Question";
 import { QuizAttempt } from "@/models/QuizAttempt";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const session = await getStudentSession();
@@ -16,7 +18,7 @@ export async function GET() {
 
     const now = new Date();
 
-    // Query published quizzes that haven't ended yet (includes upcoming and active quizzes)
+    // Query published quizzes that haven't ended yet
     const quizzes = await Quiz.find({
       status: "published",
       $or: [{ endTime: null }, { endTime: { $gte: now } }],
@@ -26,21 +28,24 @@ export async function GET() {
 
     const quizIds = quizzes.map((q) => q._id);
 
-    // Question count per quiz
-    const questionCounts = await Question.aggregate([
-      { $match: { quizId: { $in: quizIds } } },
-      { $group: { _id: "$quizId", count: { $sum: 1 } } },
+    // Run question count aggregation and student attempts query in parallel
+    const [questionCounts, studentAttempts] = await Promise.all([
+      Question.aggregate([
+        { $match: { quizId: { $in: quizIds } } },
+        { $group: { _id: "$quizId", count: { $sum: 1 } } },
+      ]),
+      QuizAttempt.find({
+        quizId: { $in: quizIds },
+        studentId: session.studentId,
+      })
+        .select("_id quizId isCompleted")
+        .lean(),
     ]);
+
     const qCountMap = new Map();
     for (const qc of questionCounts) {
       qCountMap.set(String(qc._id), qc.count);
     }
-
-    // Student's attempts for each quiz
-    const studentAttempts = await QuizAttempt.find({
-      quizId: { $in: quizIds },
-      studentId: session.studentId,
-    }).lean();
 
     const attemptsMap = new Map<string, typeof studentAttempts>();
     for (const att of studentAttempts) {
@@ -83,7 +88,10 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json({ quizzes: result });
+    return NextResponse.json(
+      { quizzes: result },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+    );
   } catch (error) {
     console.error("Student quizzes fetch error:", error);
     return NextResponse.json({ error: "Failed to load quizzes" }, { status: 500 });

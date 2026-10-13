@@ -59,13 +59,14 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
   }
 
   if (!cached.promise) {
+    const isProduction = process.env.NODE_ENV === "production";
     const opts: mongoose.ConnectOptions = {
       bufferCommands: false,
       maxPoolSize: 10,
-      minPoolSize: 1,
-      serverSelectionTimeoutMS: 8000, // 8s timeout instead of hanging for 98s
-      connectTimeoutMS: 10000,
-      socketTimeoutMS: 45000,
+      minPoolSize: 0, // Serverless best practice: don't keep idle sockets open
+      serverSelectionTimeoutMS: 5000, // 5s fast timeout
+      connectTimeoutMS: 5000,
+      socketTimeoutMS: 30000,
       heartbeatFrequencyMS: 10000,
       retryWrites: true,
       retryReads: true,
@@ -75,8 +76,14 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
     cached.promise = (async () => {
       let uri = process.env.MONGODB_URI;
 
-      // Fallback for local memory testing if URI is localhost or missing
-      if (!uri || uri.includes("127.0.0.1") || uri.includes("localhost")) {
+      if (isProduction && !uri) {
+        throw new Error(
+          "Missing MONGODB_URI environment variable! Please configure MONGODB_URI in your Vercel Project Settings."
+        );
+      }
+
+      // Fallback for local memory testing in development if URI is localhost or missing
+      if (!isProduction && (!uri || uri.includes("127.0.0.1") || uri.includes("localhost"))) {
         try {
           const testConn = await mongoose.connect(uri || "mongodb://127.0.0.1:27017/maerika_quiz_2026", {
             ...opts,
