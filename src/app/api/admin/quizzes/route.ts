@@ -7,6 +7,8 @@ import { QuizAttempt } from "@/models/QuizAttempt";
 import { QuizCreateSchema } from "@/lib/validation";
 import { AuditLog } from "@/models/AuditLog";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const session = await getAdminSession();
@@ -16,32 +18,39 @@ export async function GET() {
 
     await connectToDatabase();
 
-    const quizzes = await Quiz.find({}).sort({ createdAt: -1 }).lean();
+    const quizzes = await Quiz.find({})
+      .select(
+        "title description quizType startTime endTime durationSeconds timeLimitPerQuestion marksPerQuestion negativeMarkingEnabled negativeMarks status isLocked createdAt"
+      )
+      .sort({ createdAt: -1 })
+      .lean();
     const quizIds = quizzes.map((q) => q._id);
 
-    // Question counts
-    const questionCounts = await Question.aggregate([
-      { $match: { quizId: { $in: quizIds } } },
-      { $group: { _id: "$quizId", count: { $sum: 1 } } },
+    // Run question counts and attempt counts in parallel
+    const [questionCounts, attemptCounts] = await Promise.all([
+      Question.aggregate([
+        { $match: { quizId: { $in: quizIds } } },
+        { $group: { _id: "$quizId", count: { $sum: 1 } } },
+      ]),
+      QuizAttempt.aggregate([
+        { $match: { quizId: { $in: quizIds } } },
+        {
+          $group: {
+            _id: "$quizId",
+            total: { $sum: 1 },
+            completed: {
+              $sum: { $cond: [{ $eq: ["$isCompleted", true] }, 1, 0] },
+            },
+          },
+        },
+      ]),
     ]);
+
     const questionMap = new Map();
     for (const qc of questionCounts) {
       questionMap.set(String(qc._id), qc.count);
     }
 
-    // Attempt counts
-    const attemptCounts = await QuizAttempt.aggregate([
-      { $match: { quizId: { $in: quizIds } } },
-      {
-        $group: {
-          _id: "$quizId",
-          total: { $sum: 1 },
-          completed: {
-            $sum: { $cond: [{ $eq: ["$isCompleted", true] }, 1, 0] },
-          },
-        },
-      },
-    ]);
     const attemptMap = new Map();
     for (const ac of attemptCounts) {
       attemptMap.set(String(ac._id), ac);
@@ -58,11 +67,17 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json({ quizzes: enriched });
+    return NextResponse.json(
+      { quizzes: enriched },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+    );
   } catch (error: unknown) {
     console.error("Error fetching quizzes:", error);
     const msg = error instanceof Error ? error.message : "Database connection error";
-    return NextResponse.json({ error: `Failed to fetch quizzes: ${msg}`, quizzes: [] }, { status: 500 });
+    return NextResponse.json(
+      { error: `Failed to fetch quizzes: ${msg}`, quizzes: [] },
+      { status: 500 }
+    );
   }
 }
 

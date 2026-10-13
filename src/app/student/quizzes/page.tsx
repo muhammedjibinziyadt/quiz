@@ -76,17 +76,25 @@ export default function StudentQuizzesPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const meRes = await fetch("/api/student/auth/me");
-        if (!meRes.ok) {
+        const [meRes, quizRes] = await Promise.all([
+          fetch("/api/student/auth/me"),
+          fetch("/api/student/quizzes"),
+        ]);
+
+        if (meRes.status === 401 || quizRes.status === 401) {
           router.push("/student/login");
           return;
         }
-        const meData = await meRes.json();
-        setStudent(meData.student);
 
-        const quizRes = await fetch("/api/student/quizzes");
+        if (!meRes.ok) throw new Error("Failed to load user profile");
         if (!quizRes.ok) throw new Error("Failed to load available quizzes");
-        const quizData = await quizRes.json();
+
+        const [meData, quizData] = await Promise.all([
+          meRes.json(),
+          quizRes.json(),
+        ]);
+
+        setStudent(meData.student);
         setQuizzes(quizData.quizzes || []);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "An error occurred");

@@ -47,8 +47,8 @@ export default function AdminQuizzesListPage() {
   const [quizzes, setQuizzes] = useState<QuizRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchQuizzes = async () => {
-    setLoading(true);
+  const fetchQuizzes = async (showLoading = false) => {
+    if (showLoading) setLoading(true);
     try {
       const res = await fetch("/api/admin/quizzes");
       if (res.status === 401) {
@@ -65,7 +65,7 @@ export default function AdminQuizzesListPage() {
   };
 
   useEffect(() => {
-    fetchQuizzes();
+    fetchQuizzes(true);
   }, []);
 
   const handleTogglePublish = async (quizId: string, currentStatus: string) => {

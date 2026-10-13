@@ -35,13 +35,11 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     async function loadStats() {
       try {
-        const meRes = await fetch("/api/admin/auth/me");
-        if (!meRes.ok) {
+        const statsRes = await fetch("/api/admin/dashboard/stats");
+        if (statsRes.status === 401) {
           router.push("/admin/login");
           return;
         }
-
-        const statsRes = await fetch("/api/admin/dashboard/stats");
         if (statsRes.ok) {
           const data = await statsRes.json();
           setStats(data.stats);

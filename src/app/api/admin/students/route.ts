@@ -6,6 +6,8 @@ import { QuizAttempt } from "@/models/QuizAttempt";
 import { StudentCreateSchema } from "@/lib/validation";
 import { AuditLog } from "@/models/AuditLog";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
     const session = await getAdminSession();
@@ -35,12 +37,15 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    const total = await Student.countDocuments(query);
-    const students = await Student.find(query)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean();
+    // Parallel execution of count and list query
+    const [total, students] = await Promise.all([
+      Student.countDocuments(query),
+      Student.find(query)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+    ]);
 
     // Attach participation summary for each student
     const studentIds = students.map((s) => s._id);
@@ -71,15 +76,18 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    return NextResponse.json({
-      students: enrichedStudents,
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+    return NextResponse.json(
+      {
+        students: enrichedStudents,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
       },
-    });
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+    );
   } catch (error) {
     console.error("Error fetching students:", error);
     return NextResponse.json({ error: "Failed to fetch students" }, { status: 500 });

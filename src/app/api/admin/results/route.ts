@@ -3,6 +3,8 @@ import { getAdminSession } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import { QuizAttempt } from "@/models/QuizAttempt";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
     const session = await getAdminSession();
@@ -85,24 +87,31 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const total = await QuizAttempt.countDocuments(filter);
-    const attempts = await QuizAttempt.find(filter)
-      .populate("studentId", "name phone place accessCodePrefix")
-      .populate("quizId", "title")
-      .sort({ score: -1, completionTimeSeconds: 1, submittedAt: 1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean();
+    // Run count and attempts listing in parallel, excluding heavy answer subdocuments
+    const [total, attempts] = await Promise.all([
+      QuizAttempt.countDocuments(filter),
+      QuizAttempt.find(filter)
+        .select("-savedAnswers -answersDetail")
+        .populate("studentId", "name phone place accessCodePrefix")
+        .populate("quizId", "title")
+        .sort({ score: -1, completionTimeSeconds: 1, submittedAt: 1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+    ]);
 
-    return NextResponse.json({
-      attempts,
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+    return NextResponse.json(
+      {
+        attempts,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
       },
-    });
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+    );
   } catch (error) {
     console.error("Results fetch error:", error);
     return NextResponse.json({ error: "Failed to fetch results" }, { status: 500 });
