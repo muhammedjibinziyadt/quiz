@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   Clock,
-  ChevronLeft,
   ChevronRight,
   Send,
   AlertTriangle,
@@ -227,22 +226,11 @@ function QuizRunnerContent({
     }
   };
 
-  const handlePrevious = () => {
-    if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
-    setCurrentIndex((prev) => Math.max(0, prev - 1));
-  };
-
   const handleNext = () => {
     if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
     const currentQ = questions[currentIndex];
     if (!currentQ || !selectedAnswers[currentQ._id]) return;
     setCurrentIndex((prev) => Math.min(maxAccessibleIndex, prev + 1));
-  };
-
-  const handleSelectQuestionFromPalette = (idx: number) => {
-    if (idx > maxAccessibleIndex) return; // Prevent jumping ahead past unanswered questions
-    if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
-    setCurrentIndex(idx);
   };
 
   // Final Submit Handler
@@ -565,58 +553,51 @@ function QuizRunnerContent({
         {/* Bottom Navigation Buttons */}
         <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-slate-800">
           <div className="flex items-center justify-between gap-2 sm:gap-4">
-            <button
-              onClick={handlePrevious}
-              disabled={currentIndex === 0}
-              className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs sm:text-sm font-semibold cursor-pointer"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Previous</span>
-            </button>
-
-            <div className="flex flex-col items-center text-center px-1">
-              <span className="text-xs font-semibold text-slate-300">
-                {currentIndex + 1} / {questions.length}
+            <div className="flex items-center gap-2">
+              <span className="text-xs sm:text-sm font-semibold text-slate-300">
+                Question {currentIndex + 1} of {questions.length}
               </span>
               {!currentAnswer && currentIndex < questions.length - 1 && (
-                <span className="text-[10px] text-amber-400/80 font-medium hidden sm:inline">
-                  Answer to proceed
+                <span className="text-[11px] text-amber-400 font-medium hidden sm:inline">
+                  • Select an option to proceed
                 </span>
               )}
             </div>
 
-            {currentIndex < questions.length - 1 ? (
-              <button
-                onClick={handleNext}
-                disabled={!currentAnswer || currentIndex >= maxAccessibleIndex || submitting}
-                title={!currentAnswer ? "Answer this question to proceed" : "Next question"}
-                className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:border disabled:border-slate-700/60 disabled:text-slate-500 disabled:cursor-not-allowed disabled:shadow-none text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-600/30 transition-all cursor-pointer"
-              >
-                <span>Next</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            ) : (
-              <button
-                onClick={() => {
-                  if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
-                  handleFinalSubmit(false);
-                }}
-                disabled={submitting}
-                className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-60 text-white text-xs sm:text-sm font-semibold shadow-md shadow-red-600/30 transition-all cursor-pointer"
-              >
-                {submitting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Submitting...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4" />
-                    <span>Submit Quiz</span>
-                  </>
-                )}
-              </button>
-            )}
+            <div>
+              {currentIndex < questions.length - 1 ? (
+                <button
+                  onClick={handleNext}
+                  disabled={!currentAnswer || currentIndex >= maxAccessibleIndex || submitting}
+                  title={!currentAnswer ? "Answer this question to proceed" : "Next question"}
+                  className="flex items-center gap-1.5 sm:gap-2 px-5 sm:px-7 py-2 sm:py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:border disabled:border-slate-700/60 disabled:text-slate-500 disabled:cursor-not-allowed disabled:shadow-none text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-600/30 transition-all cursor-pointer"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+                    handleFinalSubmit(false);
+                  }}
+                  disabled={submitting}
+                  className="flex items-center gap-1.5 sm:gap-2 px-5 sm:px-7 py-2 sm:py-2.5 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-60 text-white text-xs sm:text-sm font-semibold shadow-md shadow-red-600/30 transition-all cursor-pointer"
+                >
+                  {submitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Submitting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      <span>Submit Quiz</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </main>
