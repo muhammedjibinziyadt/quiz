@@ -35,7 +35,7 @@ export default function HomePage() {
           preload="auto"
           className="absolute inset-0 w-full h-full object-cover object-center scale-105"
         >
-          <source src="/videos/bg-video.mp4" type="video/mp4" />
+          <source src="/videos/new-bg-video.mp4" type="video/mp4" />
         </video>
 
         {/* Cinematic dark tint & vignette matching example reference */}
