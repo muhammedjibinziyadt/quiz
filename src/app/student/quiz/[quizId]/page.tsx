@@ -463,7 +463,7 @@ function QuizRunnerContent({
                   )}
                 </span>
               ) : (
-                <span className="text-amber-400/90 font-medium flex items-center gap-1">
+                <span className="text-slate-400 font-medium flex items-center gap-1">
                   {currentQ.questionType === "short_answer"
                     ? "20 വാക്കുകളിൽ ഉത്തരം എഴുതി സമർപ്പിക്കുക"
                     : "Select option to proceed"}
@@ -496,10 +496,23 @@ function QuizRunnerContent({
             />
           </div>
 
-          {/* Question Text with Malayalam font */}
-          <h2 className="text-base sm:text-lg md:text-xl font-bold text-white leading-relaxed mb-4 sm:mb-6 font-malayalam break-words">
-            {currentQ.questionText}
-          </h2>
+          {/* PROMINENTLY HIGHLIGHTED QUESTION BOX */}
+          <div className="mb-6 p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-slate-900 via-blue-950/40 to-slate-900 border-2 border-blue-500/50 shadow-xl shadow-blue-950/40 relative overflow-hidden">
+            <div className="flex items-center gap-2 mb-2.5">
+              <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-blue-300 bg-blue-500/20 border border-blue-400/40 px-2.5 py-0.5 rounded-md">
+                ചോദ്യം (Question #{currentIndex + 1})
+              </span>
+              {currentQ.questionType === "short_answer" && (
+                <span className="text-[10px] sm:text-xs font-bold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
+                  മിനിമം {currentQ.minWords || 20} വാക്കുകൾ
+                </span>
+              )}
+            </div>
+
+            <h2 className="text-lg sm:text-xl md:text-2xl font-black text-white leading-relaxed font-malayalam break-words drop-shadow">
+              {currentQ.questionText}
+            </h2>
+          </div>
 
           {/* Question Image (if image-based question) */}
           {currentQ.questionImage && (
@@ -515,16 +528,16 @@ function QuizRunnerContent({
 
           {/* Options List OR Written Answer Box */}
           {currentQ.questionType === "short_answer" ? (
-            <div className="space-y-4">
-              {/* Question Type Banner */}
-              <div className="p-3.5 rounded-xl bg-gradient-to-r from-amber-950/40 via-amber-900/20 to-slate-900 border border-amber-500/30 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-amber-300 text-xs sm:text-sm font-bold">
-                  <FileText className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span>വിവരണാത്മക ഉത്തരം (Written Answer Note)</span>
-                </div>
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold">
-                  <span>മിനിമം {currentQ.minWords || 20} വാക്കുകൾ</span>
-                </div>
+            <div className="space-y-3">
+              {/* Clean, Subtle Input Guidance Header (No distracting loud orange box) */}
+              <div className="flex items-center justify-between text-xs text-slate-300 px-1">
+                <span className="font-semibold text-slate-200 flex items-center gap-1.5 text-xs sm:text-sm">
+                  <FileText className="w-4 h-4 text-blue-400" />
+                  <span>നിങ്ങളുടെ ഉത്തരം താഴെ എഴുതുക (Write your answer below):</span>
+                </span>
+                <span className="text-[11px] font-medium text-slate-400 bg-slate-800/80 px-2.5 py-0.5 rounded-full border border-slate-700">
+                  മിനിമം 20 വാക്കുകൾ
+                </span>
               </div>
 
               {/* Textarea for written answer */}
