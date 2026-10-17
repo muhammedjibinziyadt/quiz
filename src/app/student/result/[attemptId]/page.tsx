@@ -86,7 +86,7 @@ function StudentResultContent({
 
         {/* Fest Result Card */}
         <div className="fest-glass rounded-2xl sm:rounded-3xl p-4 sm:p-7 border border-amber-500/25 shadow-2xl relative w-full overflow-hidden text-center">
-          
+
           {/* SETUP 1: അഭിനന്ദനങ്ങൾ! (Congratulations) */}
           <div className="mb-4 sm:mb-5">
             <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[11px] sm:text-xs font-semibold mb-2.5 max-w-full">
@@ -133,7 +133,7 @@ function StudentResultContent({
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs sm:text-sm md:text-base font-bold font-malayalam leading-tight truncate sm:whitespace-normal">
-                    കലാമേള പ്രധാന വെബ്സൈറ്റ് സന്ദർശിക്കുക
+                    ആർട്സ് ഫെസ്റ്റ് വെബ്സൈറ്റ് സന്ദർശിക്കുക
                   </div>
                   <div className="text-[10px] sm:text-xs text-amber-100/90 font-medium tracking-wide truncate">
                     MAERIKA 2K26 Arts Fest Official Website
