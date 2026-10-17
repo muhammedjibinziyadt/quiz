@@ -147,21 +147,14 @@ export async function POST(
       console.warn("Pusher broadcast error (submission preserved):", pushErr);
     });
 
-    // PRIVACY: Return ONLY student's own score and result summary
+    // PRIVACY: Return confirmation without exposing score
     return NextResponse.json(
       {
         success: true,
         message: "Quiz submitted successfully!",
         result: {
           attemptId: updatedAttempt._id,
-          score: updatedAttempt.score,
-          totalPossibleMarks: updatedAttempt.totalPossibleMarks,
-          correctCount: updatedAttempt.correctCount,
-          incorrectCount: updatedAttempt.incorrectCount,
-          unansweredCount: updatedAttempt.unansweredCount,
-          completionTimeSeconds: updatedAttempt.completionTimeSeconds,
           submittedAt: updatedAttempt.submittedAt,
-          allowReviewAnswers: quiz.allowReviewAnswers,
         },
       },
       { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }

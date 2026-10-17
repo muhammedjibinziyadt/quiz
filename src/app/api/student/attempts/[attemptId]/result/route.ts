@@ -34,21 +34,12 @@ export async function GET(
       .lean();
 
     // STRICT PRIVACY ENFORCEMENT:
-    // Only return the individual student's own performance summary.
-    // Question details only returned if quiz.allowReviewAnswers is enabled.
+    // Withhold scores and answer details from participant view.
     return NextResponse.json(
       {
         attemptId: attempt._id,
         quizTitle: quiz?.title || "Quiz Competition",
-        score: attempt.score,
-        totalPossibleMarks: attempt.totalPossibleMarks,
-        correctCount: attempt.correctCount,
-        incorrectCount: attempt.incorrectCount,
-        unansweredCount: attempt.unansweredCount,
-        completionTimeSeconds: attempt.completionTimeSeconds,
         submittedAt: attempt.submittedAt,
-        allowReviewAnswers: quiz?.allowReviewAnswers || false,
-        answersDetail: quiz?.allowReviewAnswers ? attempt.answersDetail : undefined,
       },
       { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
     );

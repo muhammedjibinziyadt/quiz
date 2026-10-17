@@ -1,46 +1,22 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import {
   CheckCircle,
-  Clock,
-  Award,
-  HelpCircle,
-  XCircle,
-  Sparkles,
+  Globe,
+  ExternalLink,
   ArrowRight,
-  ShieldCheck,
 } from "lucide-react";
-
-interface AnswerDetail {
-  questionId: string;
-  questionText: string;
-  selectedOptionId?: string;
-  correctOptionId: string;
-  isCorrect: boolean;
-  marksAwarded: number;
-  explanation?: string;
-}
 
 interface ResultData {
   attemptId: string;
-  quizTitle: string;
-  score: number;
-  totalPossibleMarks: number;
-  correctCount: number;
-  incorrectCount: number;
-  unansweredCount: number;
-  completionTimeSeconds: number;
-  submittedAt: string;
-  allowReviewAnswers: boolean;
-  answersDetail?: AnswerDetail[];
+  quizTitle?: string;
+  submittedAt?: string;
 }
-
-import { Suspense } from "react";
 
 function StudentResultContent({
   params,
@@ -59,7 +35,7 @@ function StudentResultContent({
       try {
         const res = await fetch(`/api/student/attempts/${attemptId}/result`);
         if (!res.ok) {
-          throw new Error("Could not load your result record.");
+          throw new Error("Could not load your submission record.");
         }
         const data = await res.json();
         setResult(data);
@@ -76,8 +52,8 @@ function StudentResultContent({
   if (loading) {
     return (
       <div className="min-h-screen bg-[#080c14] flex flex-col items-center justify-center p-4">
-        <div className="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-4" />
-        <h2 className="text-white font-bold text-lg">Retrieving Your Evaluation...</h2>
+        <div className="w-10 h-10 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin mb-4" />
+        <h2 className="text-white font-bold text-lg font-malayalam">വിവരങ്ങൾ ശേഖരിക്കുന്നു...</h2>
       </div>
     );
   }
@@ -87,12 +63,12 @@ function StudentResultContent({
       <div className="min-h-screen bg-[#080c14] flex flex-col justify-between">
         <Header />
         <main className="max-w-md mx-auto my-auto p-6 text-center">
-          <p className="text-red-400 font-semibold mb-4">{error || "Result not found"}</p>
+          <p className="text-red-400 font-semibold mb-4">{error || "Submission record not found"}</p>
           <Link
             href="/student/quizzes"
             className="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-sm"
           >
-            Back to Quizzes
+            തിരികെ ഡാഷ്‌ബോർഡിലേക്ക് (Back to Dashboard)
           </Link>
         </main>
         <Footer />
@@ -100,151 +76,106 @@ function StudentResultContent({
     );
   }
 
-  const mins = Math.floor(result.completionTimeSeconds / 60);
-  const secs = result.completionTimeSeconds % 60;
-  const timeFormatted = `${mins}m ${secs}s`;
-
   return (
     <div className="min-h-screen flex flex-col bg-[#080c14]">
       <Header />
 
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {/* Celebration Card */}
-        <div className="fest-glass rounded-3xl p-8 sm:p-10 border border-slate-800 text-center relative overflow-hidden mb-8">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
+      <main className="flex-1 max-w-xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 relative">
+        {/* Festive ambient background glow */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-gradient-to-tr from-amber-600/15 via-orange-600/15 to-red-600/10 blur-3xl -z-10 rounded-full pointer-events-none" />
 
-          {/* Arts Fest Branding */}
+        {/* Fest Result Card */}
+        <div className="fest-glass rounded-3xl p-6 sm:p-8 border border-amber-500/25 shadow-2xl relative overflow-hidden text-center">
+          {/* Top Branding Logos */}
           <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="relative w-14 h-16">
+            <div className="relative w-14 h-16 drop-shadow-md">
               <Image
                 src="/images/maerika-arts-fest-logo.png"
-                alt="MAERIKA 2K26"
+                alt="MAERIKA 2K26 Arts Fest"
                 fill
                 className="object-contain"
+                priority
+              />
+            </div>
+            <div className="h-8 w-px bg-slate-800" />
+            <div className="relative w-28 h-14 drop-shadow-md">
+              <Image
+                src="/images/nattarivu-quiz-logo.png"
+                alt="നാട്ടറിവ് QUIZ 2026"
+                fill
+                className="object-contain"
+                priority
               />
             </div>
           </div>
 
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-3">
-            <CheckCircle className="w-3.5 h-3.5" />
-            Quiz Submitted Successfully
+          {/* SETUP 1: അഭിനന്ദനങ്ങൾ! (Congratulations) */}
+          <div className="mb-6">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-semibold mb-3">
+              <CheckCircle className="w-3.5 h-3.5" />
+              <span>ക്വിസ് വിജയകരമായി പൂർത്തിയാക്കി</span>
+            </div>
+
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-amber-100 font-malayalam tracking-wide drop-shadow-sm">
+              അഭിനന്ദനങ്ങൾ!
+            </h1>
+
+            <p className="text-sm sm:text-base text-slate-200 mt-2 font-medium font-malayalam leading-relaxed max-w-md mx-auto">
+              MAERIKA 2K26 - നാട്ടറിവ് ക്വിസ് 2026 മത്സരത്തിൽ പങ്കെടുത്തതിന് എല്ലാവിധ ഭാവുകങ്ങളും നേരുന്നു!
+            </p>
+            <p className="text-xs text-slate-400 mt-1 font-malayalam">
+              മത്സര ഫലങ്ങൾ പിന്നീട് ഔദ്യോഗികമായി പ്രഖ്യാപിക്കുന്നതാണ്.
+            </p>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Thank You for Participating!
-          </h1>
-          <p className="text-sm text-slate-400 mt-2 max-w-lg mx-auto">
-            Your answers for <strong className="text-white">{result.quizTitle}</strong> have been
-            recorded and officially scored by the MAERIKA 2K26 evaluation engine.
-          </p>
-
-          {/* Score Badge */}
-          <div className="my-8 inline-flex flex-col items-center justify-center px-8 py-6 rounded-2xl bg-gradient-to-b from-blue-950/60 to-slate-900/80 border border-blue-500/30 fest-glow-blue">
-            <span className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">
-              Your Personal Score
-            </span>
-            <div className="flex items-baseline gap-1">
-              <span className="text-4xl sm:text-5xl font-black text-white tracking-tight">
-                {result.score}
-              </span>
-              <span className="text-slate-400 font-semibold text-lg">
-                / {result.totalPossibleMarks}
-              </span>
-            </div>
-            <span className="text-xs text-amber-400 font-semibold mt-1">
-              Completion Time: {timeFormatted}
-            </span>
-          </div>
-
-          {/* Breakdown Stats */}
-          <div className="grid grid-cols-3 gap-3 sm:gap-4 max-w-lg mx-auto text-left">
-            <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
-              <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold mb-1">
-                <CheckCircle className="w-3.5 h-3.5" /> Correct
-              </div>
-              <p className="text-xl sm:text-2xl font-bold text-white">
-                {result.correctCount}
-              </p>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
-              <div className="flex items-center gap-1.5 text-xs text-red-400 font-semibold mb-1">
-                <XCircle className="w-3.5 h-3.5" /> Incorrect
-              </div>
-              <p className="text-xl sm:text-2xl font-bold text-white">
-                {result.incorrectCount}
-              </p>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
-              <div className="flex items-center gap-1.5 text-xs text-slate-400 font-semibold mb-1">
-                <HelpCircle className="w-3.5 h-3.5" /> Unanswered
-              </div>
-              <p className="text-xl sm:text-2xl font-bold text-white">
-                {result.unansweredCount}
-              </p>
+          {/* SETUP 2: MAERIKA FEST POSTER */}
+          <div className="my-6 relative rounded-2xl overflow-hidden border border-amber-500/30 shadow-2xl shadow-orange-950/50 bg-black/40">
+            <div className="relative w-full aspect-[4/5] max-w-sm sm:max-w-md mx-auto">
+              <Image
+                src="/images/maerika-fest-poster.jpg"
+                alt="MAERIKA 2K26 Arts Fest Inauguration Ceremony Poster - കലായുക ഭാവുകം"
+                fill
+                className="object-contain rounded-2xl"
+                priority
+                sizes="(max-width: 640px) 100vw, 450px"
+              />
             </div>
           </div>
 
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+          {/* SETUP 3: ARTS FEST MAIN WEBSITE OG BUTTON */}
+          <div className="space-y-3 pt-2">
+            <a
+              href="https://maerika-2k26.jawharathululoomsuffadars.online/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full group flex items-center justify-between p-4 sm:p-4.5 rounded-2xl font-bold text-white bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 hover:from-amber-500 hover:via-orange-500 hover:to-red-500 shadow-xl shadow-orange-600/30 hover:shadow-orange-600/40 active:scale-[0.99] transition-all border border-amber-400/30 text-left cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0 border border-white/20 group-hover:scale-105 transition-transform">
+                  <Globe className="w-5 h-5 text-amber-200" />
+                </div>
+                <div>
+                  <div className="text-sm sm:text-base font-bold font-malayalam leading-snug">
+                    കലാമേള പ്രധാന വെബ്സൈറ്റ് സന്ദർശിക്കുക
+                  </div>
+                  <div className="text-[11px] sm:text-xs text-amber-200/90 font-medium tracking-wide">
+                    MAERIKA 2K26 Arts Fest Official Website
+                  </div>
+                </div>
+              </div>
+              <ExternalLink className="w-5 h-5 text-amber-200 shrink-0 ml-2 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            </a>
+
+            {/* Back to Dashboard Link */}
             <Link
               href="/student/quizzes"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-all shadow-md shadow-blue-600/30"
+              className="inline-flex items-center justify-center gap-2 pt-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
             >
-              <span>Back to Dashboard</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>തിരികെ ഡാഷ്‌ബോർഡിലേക്ക് (Back to Dashboard)</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>
-
-        {/* Optional Review Answers (Only if authorized by quiz rules) */}
-        {result.allowReviewAnswers && result.answersDetail && (
-          <div className="fest-glass rounded-2xl p-6 sm:p-8 border border-slate-800">
-            <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-blue-400" />
-              Answer Review & Explanations
-            </h2>
-
-            <div className="space-y-6">
-              {result.answersDetail.map((ans, idx) => (
-                <div
-                  key={ans.questionId}
-                  className={`p-5 rounded-xl border ${
-                    ans.isCorrect
-                      ? "bg-emerald-950/20 border-emerald-800/40"
-                      : "bg-red-950/20 border-red-800/40"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="text-xs font-bold text-slate-400">
-                      Question #{idx + 1}
-                    </span>
-                    <span
-                      className={`text-xs font-bold px-2 py-0.5 rounded ${
-                        ans.isCorrect
-                          ? "bg-emerald-500/20 text-emerald-300"
-                          : "bg-red-500/20 text-red-300"
-                      }`}
-                    >
-                      {ans.marksAwarded >= 0 ? `+${ans.marksAwarded}` : ans.marksAwarded} Marks
-                    </span>
-                  </div>
-
-                  <p className="text-white font-medium text-sm mb-3 font-malayalam">
-                    {ans.questionText}
-                  </p>
-
-                  {ans.explanation && (
-                    <div className="mt-3 p-3 rounded-lg bg-slate-900/80 border border-slate-800 text-xs text-slate-300 font-malayalam leading-relaxed">
-                      <strong className="text-blue-400">Explanation: </strong>
-                      {ans.explanation}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </main>
 
       <Footer />
@@ -261,7 +192,7 @@ export default function StudentResultPage({
     <Suspense
       fallback={
         <div className="min-h-screen bg-[#080c14] flex items-center justify-center text-slate-400 text-sm">
-          Loading student evaluation result...
+          Loading submission details...
         </div>
       }
     >
