@@ -76,7 +76,11 @@ export async function PUT(
       }
     }
 
-    const updated = await Student.findByIdAndUpdate(id, { $set: parse.data }, { new: true });
+    const updateData = { ...parse.data };
+    if (updateData.name) updateData.name = updateData.name.trim().toUpperCase();
+    if (updateData.place) updateData.place = updateData.place.trim().toUpperCase();
+
+    const updated = await Student.findByIdAndUpdate(id, { $set: updateData }, { new: true });
     if (!updated) {
       return NextResponse.json({ error: "Student not found" }, { status: 404 });
     }
@@ -84,7 +88,7 @@ export async function PUT(
     await AuditLog.create({
       action: "student_updated",
       performedBy: session.username,
-      details: { studentId: id, updates: parse.data },
+      details: { studentId: id, updates: updateData },
       timestamp: new Date(),
     });
 

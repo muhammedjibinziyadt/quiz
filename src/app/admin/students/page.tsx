@@ -117,9 +117,9 @@ function StudentsContent() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: formName,
-          phone: formPhone,
-          place: formPlace,
+          name: formName.trim().toUpperCase(),
+          phone: formPhone.trim(),
+          place: formPlace.trim().toUpperCase(),
           notes: formNotes,
           isActive: formIsActive,
         }),
@@ -425,9 +425,9 @@ function StudentsContent() {
                 <input
                   type="text"
                   value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
+                  onChange={(e) => setFormName(e.target.value.toUpperCase())}
                   required
-                  className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm"
+                  className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm uppercase placeholder:normal-case"
                 />
               </div>
 
@@ -451,9 +451,9 @@ function StudentsContent() {
                 <input
                   type="text"
                   value={formPlace}
-                  onChange={(e) => setFormPlace(e.target.value)}
+                  onChange={(e) => setFormPlace(e.target.value.toUpperCase())}
                   required
-                  className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm"
+                  className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm uppercase placeholder:normal-case"
                 />
               </div>
 

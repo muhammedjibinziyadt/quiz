@@ -145,9 +145,9 @@ export async function POST(req: NextRequest) {
     }
 
     const student = await Student.create({
-      name,
-      phone,
-      place,
+      name: name.trim().toUpperCase(),
+      phone: phone.trim(),
+      place: place.trim().toUpperCase(),
       notes: notes || "",
       accessCodeHash: codeHash,
       accessCodePrefix: code, // 4-digit numeric code

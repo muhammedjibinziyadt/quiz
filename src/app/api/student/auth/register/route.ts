@@ -18,6 +18,8 @@ export async function POST(req: NextRequest) {
     }
 
     const { name, phone, place } = parse.data;
+    const cleanName = name.trim().toUpperCase();
+    const cleanPlace = place.trim().toUpperCase();
     await connectToDatabase();
 
     // Check if a student with this normalized phone already registered
@@ -30,17 +32,17 @@ export async function POST(req: NextRequest) {
 
     if (student) {
       // Existing student: refresh name/place and ensure active
-      student.name = name;
-      student.place = place;
+      student.name = cleanName;
+      student.place = cleanPlace;
       student.isActive = true;
       await student.save();
     } else {
       // Create new student record with internal unique identifier
       const internalKey = crypto.randomUUID();
       student = await Student.create({
-        name,
+        name: cleanName,
         phone,
-        place,
+        place: cleanPlace,
         accessCodeHash: internalKey,
         accessCodePrefix: "REG",
         isActive: true,

@@ -30,9 +30,9 @@ export default function StudentLoginPage() {
     e.preventDefault();
     setError(null);
 
-    const cleanName = name.trim();
+    const cleanName = name.trim().toUpperCase();
     const cleanPhone = phone.trim();
-    const cleanPlace = place.trim();
+    const cleanPlace = place.trim().toUpperCase();
 
     if (!cleanName || cleanName.length < 2) {
       setError("Please enter your full name (minimum 2 characters).");
@@ -130,10 +130,10 @@ export default function StudentLoginPage() {
                 <input
                   type="text"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => setName(e.target.value.toUpperCase())}
                   placeholder="Enter full name"
                   required
-                  className="w-full px-4 py-3 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  className="w-full px-4 py-3 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all uppercase placeholder:normal-case"
                 />
               </div>
 
@@ -161,10 +161,10 @@ export default function StudentLoginPage() {
                 <input
                   type="text"
                   value={place}
-                  onChange={(e) => setPlace(e.target.value)}
+                  onChange={(e) => setPlace(e.target.value.toUpperCase())}
                   placeholder="Enter place / location"
                   required
-                  className="w-full px-4 py-3 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  className="w-full px-4 py-3 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all uppercase placeholder:normal-case"
                 />
               </div>
 
