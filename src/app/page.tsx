@@ -38,10 +38,9 @@ export default function HomePage() {
           <source src="/videos/new-bg-video.mp4" type="video/mp4" />
         </video>
 
-        {/* Cinematic dark tint & vignette matching example reference */}
-        <div className="absolute inset-0 bg-[#060a12]/50" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#080c14]/85 via-[#080c14]/25 to-[#080c14]/90" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_35%,_#080c14_92%)] opacity-80" />
+        {/* Clean, neutral dark cinematic overlay preserving 100% natural video color without tint or saturation boost */}
+        <div className="absolute inset-0 bg-black/35" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/75" />
       </div>
 
       <Header />
@@ -85,7 +84,7 @@ export default function HomePage() {
             </div>
 
             {/* Main Headline */}
-            <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold text-white tracking-tight max-w-4xl mx-auto leading-snug sm:leading-tight font-malayalam drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]">
+            <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold text-white tracking-tight max-w-4xl mx-auto leading-snug sm:leading-tight font-malayalam [text-shadow:_0_4px_24px_rgba(0,0,0,0.95),_0_1px_4px_rgba(0,0,0,0.9)]">
               Maerika 2k26 ആർട്സ് ഫെസ്റ്റിന്റെ ഭാഗമായി സംഘടിപ്പിക്കുന്ന നാട്ടറിവ് ക്വിസ് 2026
             </h1>
 
