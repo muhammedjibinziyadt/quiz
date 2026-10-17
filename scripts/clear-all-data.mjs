@@ -37,10 +37,16 @@ async function clearAllData() {
   for (const dbName of targetDatabases) {
     const db = client.db(dbName);
     const existingCollections = await db.listCollections().toArray();
-    const existingColNames = existingCollections.map((c) => c.name);
+    const existingColNames = existingCollections
+      .map((c) => c.name)
+      .filter((name) => !name.startsWith("system."));
 
     console.log(`\n--- Cleaning Database [${dbName}] ---`);
-    for (const colName of collectionsToClear) {
+
+    // Combine predefined collections with any dynamically found collections
+    const allCols = Array.from(new Set([...collectionsToClear, ...existingColNames]));
+
+    for (const colName of allCols) {
       if (existingColNames.includes(colName)) {
         const res = await db.collection(colName).deleteMany({});
         console.log(`  ✓ [${dbName}.${colName}] Deleted ${res.deletedCount} documents.`);
