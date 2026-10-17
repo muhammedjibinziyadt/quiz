@@ -62,13 +62,29 @@ export async function POST(
       order = count + 1;
     }
 
+    const isShortAnswer = parse.data.questionType === "short_answer";
+    const optionsToSave =
+      isShortAnswer && (!parse.data.options || parse.data.options.length < 2)
+        ? [
+            { id: "opt_note_1", text: "Written Answer" },
+            { id: "opt_note_2", text: "Reference Answer" },
+          ]
+        : parse.data.options || [];
+    const correctIdToSave =
+      isShortAnswer && !parse.data.correctOptionId
+        ? "opt_note_1"
+        : parse.data.correctOptionId || "";
+
     const question = await Question.create({
       quizId: id,
       order,
+      questionType: parse.data.questionType || "mcq",
+      minWords: parse.data.minWords ?? 20,
       questionText: parse.data.questionText || "",
       questionImage: parse.data.questionImage || null,
-      options: parse.data.options,
-      correctOptionId: parse.data.correctOptionId,
+      options: optionsToSave,
+      correctOptionId: correctIdToSave,
+      correctAnswerText: parse.data.correctAnswerText || "",
       explanation: parse.data.explanation || "",
       marks: parse.data.marks ?? null,
       negativeMarks: parse.data.negativeMarks ?? null,
@@ -82,7 +98,8 @@ export async function POST(
     return NextResponse.json({ success: true, question }, { status: 201 });
   } catch (error) {
     console.error("Error creating question:", error);
-    return NextResponse.json({ error: "Failed to create question" }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : "Failed to create question";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 

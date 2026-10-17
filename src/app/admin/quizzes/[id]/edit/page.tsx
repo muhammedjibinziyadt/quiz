@@ -27,6 +27,7 @@ import {
   Calendar,
   Clock,
   Pencil,
+  FileText,
 } from "lucide-react";
 
 interface Option {
@@ -38,10 +39,13 @@ interface Option {
 interface QuestionItem {
   _id: string;
   order: number;
+  questionType?: "mcq" | "short_answer";
+  minWords?: number;
   questionText: string;
   questionImage?: string;
   options: Option[];
-  correctOptionId: string;
+  correctOptionId?: string;
+  correctAnswerText?: string;
   explanation?: string;
   marks?: number;
   negativeMarks?: number;
@@ -111,6 +115,9 @@ function EditQuizContent({
     { id: "opt_4", text: "" },
   ]);
   const [qCorrectId, setQCorrectId] = useState("opt_1");
+  const [qType, setQType] = useState<"mcq" | "short_answer">("mcq");
+  const [qMinWords, setQMinWords] = useState<number>(20);
+  const [qCorrectAnswerText, setQCorrectAnswerText] = useState("");
   const [qExplanation, setQExplanation] = useState("");
   const [qUploading, setQUploading] = useState(false);
   const [qSaving, setQSaving] = useState(false);
@@ -179,6 +186,8 @@ function EditQuizContent({
   // Open modal to add a fresh question
   const handleOpenAddQuestion = () => {
     setEditingQuestionId(null);
+    setQType("mcq");
+    setQMinWords(20);
     setQText("");
     setQImage(null);
     setQTimeLimitSeconds("");
@@ -189,6 +198,7 @@ function EditQuizContent({
       { id: "opt_4", text: "" },
     ]);
     setQCorrectId("opt_1");
+    setQCorrectAnswerText("");
     setQExplanation("");
     setShowQuestionModal(true);
   };
@@ -196,6 +206,8 @@ function EditQuizContent({
   // Open modal to edit an existing question
   const handleOpenEditQuestion = (q: QuestionItem) => {
     setEditingQuestionId(q._id);
+    setQType(q.questionType || "mcq");
+    setQMinWords(q.minWords ?? 20);
     setQText(q.questionText || "");
     setQImage(q.questionImage || null);
     setQTimeLimitSeconds(q.timeLimitSeconds ?? "");
@@ -210,6 +222,7 @@ function EditQuizContent({
           ]
     );
     setQCorrectId(q.correctOptionId || "opt_1");
+    setQCorrectAnswerText(q.correctAnswerText || "");
     setQExplanation(q.explanation || "");
     setShowQuestionModal(true);
   };
@@ -222,19 +235,31 @@ function EditQuizContent({
       return;
     }
 
-    const filledOptions = qOptions.filter((o) => o.text.trim() !== "");
-    if (filledOptions.length < 2) {
-      alert("Please provide at least 2 non-empty options.");
-      return;
+    let filledOptions: Option[] = [];
+    if (qType === "mcq") {
+      filledOptions = qOptions.filter((o) => o.text.trim() !== "");
+      if (filledOptions.length < 2) {
+        alert("Please provide at least 2 non-empty options for Multiple Choice.");
+        return;
+      }
     }
 
     setQSaving(true);
     try {
       const payload = {
+        questionType: qType,
+        minWords: qMinWords || 20,
         questionText: qText,
         questionImage: qImage,
-        options: filledOptions,
-        correctOptionId: qCorrectId,
+        options:
+          qType === "mcq"
+            ? filledOptions
+            : [
+                { id: "opt_note_1", text: "Written Answer" },
+                { id: "opt_note_2", text: "Reference Answer" },
+              ],
+        correctOptionId: qType === "mcq" ? qCorrectId : "opt_note_1",
+        correctAnswerText: qCorrectAnswerText,
         explanation: qExplanation,
         timeLimitSeconds:
           qTimeLimitSeconds !== "" && !isNaN(Number(qTimeLimitSeconds))
@@ -259,6 +284,8 @@ function EditQuizContent({
       setShowQuestionModal(false);
       // Reset question modal state
       setEditingQuestionId(null);
+      setQType("mcq");
+      setQMinWords(20);
       setQText("");
       setQImage(null);
       setQTimeLimitSeconds("");
@@ -269,6 +296,7 @@ function EditQuizContent({
         { id: "opt_4", text: "" },
       ]);
       setQCorrectId("opt_1");
+      setQCorrectAnswerText("");
       setQExplanation("");
 
       fetchQuizData();
@@ -520,6 +548,15 @@ function EditQuizContent({
                         <span className="text-xs font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded">
                           #{idx + 1}
                         </span>
+                        {q.questionType === "short_answer" ? (
+                          <span className="text-[10px] font-bold text-amber-300 bg-amber-500/20 border border-amber-500/35 px-2 py-0.5 rounded flex items-center gap-1">
+                            <FileText className="w-3 h-3 text-amber-400" /> Written Note ({q.minWords || 20}+ words gives point)
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-semibold text-slate-300 bg-slate-800 border border-slate-700 px-2 py-0.5 rounded">
+                            Multiple Choice
+                          </span>
+                        )}
                         <span className="text-[10px] font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded flex items-center gap-1">
                           <Clock className="w-3 h-3 text-amber-400" />
                           {q.timeLimitSeconds
@@ -548,28 +585,47 @@ function EditQuizContent({
                         </div>
                       )}
 
-                      {/* Options breakdown */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                        {q.options.map((opt) => {
-                          const isCorrect = opt.id === q.correctOptionId;
-                          return (
-                            <div
-                              key={opt.id}
-                              className={`p-2.5 rounded-lg border font-malayalam flex items-center justify-between ${isCorrect
-                                ? "bg-emerald-950/30 border-emerald-500/50 text-emerald-200"
-                                : "bg-slate-900/60 border-slate-800 text-slate-300"
-                                }`}
-                            >
-                              <span>{opt.text}</span>
-                              {isCorrect && (
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500 text-slate-950 shrink-0">
-                                  Correct
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
+                      {/* Options or Written Note breakdown */}
+                      {q.questionType === "short_answer" ? (
+                        <div className="p-3.5 rounded-xl bg-amber-950/20 border border-amber-500/30 text-xs">
+                          <div className="flex items-center gap-2 text-amber-300 font-bold mb-1">
+                            <FileText className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Written Answer Question (Min {q.minWords || 20} words required for full point)</span>
+                          </div>
+                          {q.correctAnswerText ? (
+                            <p className="text-slate-300 text-xs mt-1">
+                              <span className="text-slate-400 font-semibold">Reference Note: </span>
+                              {q.correctAnswerText}
+                            </p>
+                          ) : (
+                            <p className="text-slate-400 text-xs italic mt-0.5">
+                              Students will type their answer in a text box. Any answer with over {q.minWords || 20} words will be marked right and awarded points.
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                          {q.options.map((opt) => {
+                            const isCorrect = opt.id === q.correctOptionId;
+                            return (
+                              <div
+                                key={opt.id}
+                                className={`p-2.5 rounded-lg border font-malayalam flex items-center justify-between ${isCorrect
+                                  ? "bg-emerald-950/30 border-emerald-500/50 text-emerald-200"
+                                  : "bg-slate-900/60 border-slate-800 text-slate-300"
+                                  }`}
+                              >
+                                <span>{opt.text}</span>
+                                {isCorrect && (
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500 text-slate-950 shrink-0">
+                                    Correct
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
 
                       {q.explanation && (
                         <p className="mt-3 text-xs text-slate-400 font-malayalam bg-slate-900/40 p-2.5 rounded-lg border border-slate-800">
@@ -760,6 +816,48 @@ function EditQuizContent({
             </div>
 
             <form onSubmit={handleSaveQuestion} className="space-y-4">
+              {/* Question Type Selection Toggle */}
+              <div>
+                <label className="block text-xs font-semibold uppercase text-slate-300 mb-2">
+                  Question Format / Type *
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setQType("mcq")}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                      qType === "mcq"
+                        ? "bg-blue-600/20 border-blue-500 text-white shadow-lg ring-1 ring-blue-500"
+                        : "bg-slate-900 border-slate-700 text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <div className="font-bold text-xs sm:text-sm flex items-center gap-1.5 text-blue-300">
+                      <span>🔘 Multiple Choice (MCQ)</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Provide 4 options (A, B, C, D) and select the correct option.
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setQType("short_answer")}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                      qType === "short_answer"
+                        ? "bg-amber-500/20 border-amber-500 text-white shadow-lg ring-1 ring-amber-500"
+                        : "bg-slate-900 border-slate-700 text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <div className="font-bold text-xs sm:text-sm flex items-center gap-1.5 text-amber-300">
+                      <span>✍️ Short Notes / Written Answer</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      No options. Student writes in text box; over 20 words gives point!
+                    </p>
+                  </button>
+                </div>
+              </div>
+
               {/* Question Time Limit */}
               <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -837,40 +935,74 @@ function EditQuizContent({
                 )}
               </div>
 
-              {/* Options */}
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-300 mb-2">
-                  Answer Options (Select the Radio button for the Correct Answer) *
-                </label>
-                <div className="space-y-2.5">
-                  {qOptions.map((opt, i) => (
-                    <div key={opt.id} className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="correctAnswer"
-                        checked={qCorrectId === opt.id}
-                        onChange={() => setQCorrectId(opt.id)}
-                        className="w-4 h-4 text-emerald-500 bg-slate-900 border-slate-700"
-                        title="Mark as correct option"
-                      />
-                      <span className="w-6 text-xs font-bold text-slate-400">
-                        {String.fromCharCode(65 + i)}:
-                      </span>
-                      <input
-                        type="text"
-                        value={opt.text}
-                        onChange={(e) => {
-                          const updated = [...qOptions];
-                          updated[i].text = e.target.value;
-                          setQOptions(updated);
-                        }}
-                        placeholder={`Option ${String.fromCharCode(65 + i)}`}
-                        className="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm font-malayalam"
-                      />
-                    </div>
-                  ))}
+              {/* CONDITIONAL: Options for MCQ OR Written Answer Note for Short Answer */}
+              {qType === "mcq" ? (
+                <div>
+                  <label className="block text-xs font-semibold uppercase text-slate-300 mb-2">
+                    Answer Options (Select the Radio button for the Correct Answer) *
+                  </label>
+                  <div className="space-y-2.5">
+                    {qOptions.map((opt, i) => (
+                      <div key={opt.id} className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name="correctAnswer"
+                          checked={qCorrectId === opt.id}
+                          onChange={() => setQCorrectId(opt.id)}
+                          className="w-4 h-4 text-emerald-500 bg-slate-900 border-slate-700"
+                          title="Mark as correct option"
+                        />
+                        <span className="w-6 text-xs font-bold text-slate-400">
+                          {String.fromCharCode(65 + i)}:
+                        </span>
+                        <input
+                          type="text"
+                          value={opt.text}
+                          onChange={(e) => {
+                            const updated = [...qOptions];
+                            updated[i].text = e.target.value;
+                            setQOptions(updated);
+                          }}
+                          placeholder={`Option ${String.fromCharCode(65 + i)}`}
+                          className="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm font-malayalam"
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                /* SHORT ANSWER / WRITTEN NOTE SECTION */
+                <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-500/35 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-amber-400" />
+                      <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">
+                        Written Answer Note Rule
+                      </span>
+                    </div>
+                    <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
+                      Over 20 Words Rule Active
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Students will answer this question by typing in a dedicated text box with a word counter. If their written answer is <strong>over 20 words</strong>, it will automatically be accepted as the right answer and the full point will be awarded!
+                  </p>
+
+                  <div>
+                    <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
+                      Answer Note / Reference Key (Optional)
+                    </label>
+                    <textarea
+                      value={qCorrectAnswerText}
+                      onChange={(e) => setQCorrectAnswerText(e.target.value)}
+                      placeholder="Enter optional answer note, summary, or reference model answer..."
+                      rows={2}
+                      className="w-full px-3.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs font-malayalam focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Explanation */}
               <div>

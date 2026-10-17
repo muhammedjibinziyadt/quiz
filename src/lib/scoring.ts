@@ -7,7 +7,10 @@ export interface ScoringQuestion {
   _id: unknown;
   marks?: number | null;
   negativeMarks?: number | null;
-  correctOptionId: string;
+  questionType?: "mcq" | "short_answer";
+  minWords?: number;
+  correctOptionId?: string;
+  correctAnswerText?: string;
   questionText?: string;
   explanation?: string;
 }
@@ -30,7 +33,7 @@ export interface EvaluationResult {
 
 /**
  * Server-authoritative scoring engine.
- * Evaluates submitted answers against actual correct options stored in the database.
+ * Evaluates submitted answers against actual correct options or word count rules stored in the database.
  */
 export function evaluateQuizAttempt(
   quiz: ScoringQuiz,
@@ -56,44 +59,73 @@ export function evaluateQuizAttempt(
   for (const q of questions) {
     const qId = String(q._id);
     const marksForQuestion = q.marks !== null && q.marks !== undefined ? q.marks : quiz.marksPerQuestion;
-    const negMarksForQuestion = q.negativeMarks !== null && q.negativeMarks !== undefined ? q.negativeMarks : quiz.negativeMarks;
-
     totalPossibleMarks += marksForQuestion;
     const selectedOption = answerMap.get(qId);
+    const isShortAnswer = q.questionType === "short_answer";
 
-    if (!selectedOption) {
+    if (!selectedOption || !selectedOption.trim()) {
       // Unanswered
       unansweredCount++;
       answersDetail.push({
         questionId: qId,
         questionText: q.questionText || "",
         selectedOptionId: undefined,
-        correctOptionId: q.correctOptionId,
+        correctOptionId: isShortAnswer ? (q.correctAnswerText || "Over 20 words answer note") : (q.correctOptionId || ""),
         isCorrect: false,
         marksAwarded: 0,
         explanation: q.explanation || "",
       });
+    } else if (isShortAnswer) {
+      // Short answer / written note: accept as right answer if over 20 words (wordCount >= minWords)
+      const words = selectedOption.trim().split(/\s+/).filter(Boolean);
+      const requiredWords = q.minWords ?? 20;
+      const isWordCountPassed = words.length >= requiredWords;
+
+      if (isWordCountPassed) {
+        correctCount++;
+        totalScore += marksForQuestion;
+        answersDetail.push({
+          questionId: qId,
+          questionText: q.questionText || "",
+          selectedOptionId: selectedOption,
+          correctOptionId: q.correctAnswerText || `Accepted (>= ${requiredWords} words)`,
+          isCorrect: true,
+          marksAwarded: marksForQuestion,
+          explanation: q.explanation || "",
+        });
+      } else {
+        incorrectCount++;
+        answersDetail.push({
+          questionId: qId,
+          questionText: q.questionText || "",
+          selectedOptionId: selectedOption,
+          correctOptionId: q.correctAnswerText || `Minimum ${requiredWords} words required (got ${words.length})`,
+          isCorrect: false,
+          marksAwarded: 0,
+          explanation: q.explanation || "",
+        });
+      }
     } else if (selectedOption === q.correctOptionId) {
-      // Correct
+      // MCQ Correct
       correctCount++;
       totalScore += marksForQuestion;
       answersDetail.push({
         questionId: qId,
         questionText: q.questionText || "",
         selectedOptionId: selectedOption,
-        correctOptionId: q.correctOptionId,
+        correctOptionId: q.correctOptionId || "",
         isCorrect: true,
         marksAwarded: marksForQuestion,
         explanation: q.explanation || "",
       });
     } else {
-      // Incorrect - minus score / negative marking is completely removed
+      // MCQ Incorrect
       incorrectCount++;
       answersDetail.push({
         questionId: qId,
         questionText: q.questionText || "",
         selectedOptionId: selectedOption,
-        correctOptionId: q.correctOptionId,
+        correctOptionId: q.correctOptionId || "",
         isCorrect: false,
         marksAwarded: 0,
         explanation: q.explanation || "",
@@ -147,7 +179,7 @@ export async function getQuizLeaderboard(quizId: string): Promise<LeaderboardEnt
     quizId,
     isCompleted: true,
   })
-    .select("studentId score completionTimeSeconds submittedAt")
+    .select("studentId score totalPossibleMarks correctCount incorrectCount unansweredCount completionTimeSeconds submittedAt")
     .populate("studentId", "name phone place")
     .sort({
       score: -1,

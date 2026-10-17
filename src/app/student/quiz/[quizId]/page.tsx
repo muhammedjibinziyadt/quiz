@@ -11,6 +11,7 @@ import {
   Info,
   CheckCircle2,
   HelpCircle,
+  FileText,
 } from "lucide-react";
 
 interface Option {
@@ -22,6 +23,8 @@ interface Option {
 interface Question {
   _id: string;
   order: number;
+  questionType?: "mcq" | "short_answer";
+  minWords?: number;
   questionText: string;
   questionImage?: string;
   options: Option[];
@@ -67,6 +70,7 @@ function QuizRunnerContent({
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
+  const [writtenAnswer, setWrittenAnswer] = useState("");
   const [questionTimeLeft, setQuestionTimeLeft] = useState<number>(10);
   const [submitting, setSubmitting] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
@@ -104,6 +108,11 @@ function QuizRunnerContent({
           );
         }
         setSelectedAnswers(initialAnswers);
+
+        // Populate written answer for first question if exists
+        if (loadedQuestions[0] && initialAnswers[loadedQuestions[0]._id]) {
+          setWrittenAnswer(initialAnswers[loadedQuestions[0]._id]);
+        }
 
         // Resume at first unanswered question
         const firstUnanswered = loadedQuestions.findIndex(
@@ -148,8 +157,11 @@ function QuizRunnerContent({
   useEffect(() => {
     if (!attempt || submitting || questions.length === 0) return;
 
-    // Reset countdown to current question's time limit
+    // Reset countdown to current question's time limit and sync writtenAnswer
     const currentQ = questions[currentIndex];
+    if (currentQ) {
+      setWrittenAnswer(selectedAnswers[currentQ._id] || "");
+    }
     const limit =
       currentQ?.timeLimitSeconds || quiz?.timeLimitPerQuestion || 10;
     setQuestionTimeLeft(limit);
@@ -441,14 +453,20 @@ function QuizRunnerContent({
               {currentAnswer ? (
                 <span className="text-emerald-400 font-semibold flex items-center gap-1.5 animate-pulse">
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Answer Selected</span>
+                  <span>
+                    {currentQ.questionType === "short_answer"
+                      ? "ഉത്തരം രേഖപ്പെടുത്തി (Answer Submitted)"
+                      : "Answer Selected"}
+                  </span>
                   {currentIndex < questions.length - 1 && (
                     <span className="text-slate-400 font-normal hidden xs:inline">→ Next...</span>
                   )}
                 </span>
               ) : (
                 <span className="text-amber-400/90 font-medium flex items-center gap-1">
-                  Select option to proceed
+                  {currentQ.questionType === "short_answer"
+                    ? "20 വാക്കുകളിൽ ഉത്തരം എഴുതി സമർപ്പിക്കുക"
+                    : "Select option to proceed"}
                 </span>
               )}
             </span>
@@ -495,59 +513,160 @@ function QuizRunnerContent({
             </div>
           )}
 
-          {/* Options List */}
-          <div className="space-y-2.5 sm:space-y-3.5">
-            {currentQ.options.map((opt, optIndex) => {
-              const isSelected = currentAnswer === opt.id;
-              const letter = String.fromCharCode(65 + optIndex); // A, B, C, D
+          {/* Options List OR Written Answer Box */}
+          {currentQ.questionType === "short_answer" ? (
+            <div className="space-y-4">
+              {/* Question Type Banner */}
+              <div className="p-3.5 rounded-xl bg-gradient-to-r from-amber-950/40 via-amber-900/20 to-slate-900 border border-amber-500/30 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-amber-300 text-xs sm:text-sm font-bold">
+                  <FileText className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>വിവരണാത്മക ഉത്തരം (Written Answer Note)</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold">
+                  <span>മിനിമം {currentQ.minWords || 20} വാക്കുകൾ</span>
+                </div>
+              </div>
 
-              return (
-                <button
-                  key={opt.id}
-                  onClick={() => handleSelectOption(opt.id)}
-                  className={`w-full text-left p-3 sm:p-4 rounded-xl border transition-all flex items-start gap-3 sm:gap-4 cursor-pointer active:scale-[0.99] ${
-                    isSelected
-                      ? "bg-blue-600/20 border-blue-500 text-white fest-glow-blue ring-1 ring-blue-500/50"
-                      : "bg-slate-900/60 border-slate-800 text-slate-200 hover:bg-slate-800/80 hover:border-slate-700"
-                  }`}
-                >
-                  <div
-                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
-                      isSelected
-                        ? "bg-blue-600 text-white shadow-md shadow-blue-600/40"
-                        : "bg-slate-800 text-slate-400 border border-slate-700"
-                    }`}
-                  >
-                    {letter}
-                  </div>
+              {/* Textarea for written answer */}
+              <div className="relative">
+                <textarea
+                  value={writtenAnswer}
+                  onChange={(e) => setWrittenAnswer(e.target.value)}
+                  disabled={submitting}
+                  rows={5}
+                  placeholder="ഇവിടെ നിങ്ങളുടെ ഉത്തരം ചുരുങ്ങിയത് 20 വാക്കുകളിൽ വ്യക്തമായി എഴുതുക... (Write your answer note here in at least 20 words...)"
+                  className="w-full p-4 rounded-xl bg-slate-900/90 border border-slate-700 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white text-sm sm:text-base font-malayalam leading-relaxed placeholder:text-slate-500 resize-none transition-all"
+                />
 
-                  <div className="flex-1 font-malayalam text-xs sm:text-sm md:text-base leading-relaxed break-words min-w-0">
-                    {opt.imageUrl && (
-                      <div className="relative w-36 h-20 sm:w-40 sm:h-24 rounded-lg overflow-hidden border border-slate-700 mb-2">
-                        <Image
-                          src={opt.imageUrl}
-                          alt={opt.text}
-                          fill
-                          className="object-contain p-1"
-                        />
+                {/* Live word counter */}
+                {(() => {
+                  const words = writtenAnswer.trim().split(/\s+/).filter(Boolean);
+                  const wordCount = writtenAnswer.trim() ? words.length : 0;
+                  const reqWords = currentQ.minWords || 20;
+                  const passed = wordCount >= reqWords;
+
+                  return (
+                    <div className="flex items-center justify-between text-xs px-1 pt-2">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`font-mono font-bold px-2.5 py-1 rounded-md text-xs ${
+                            passed
+                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                              : "bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                          }`}
+                        >
+                          {wordCount} / {reqWords} വാക്കുകൾ (words)
+                        </span>
+                        <span className="text-slate-400 text-[11px]">
+                          {passed ? (
+                            <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> നിശ്ചിത വാക്ക് പരിധി തികഞ്ഞു (Ready to submit)
+                            </span>
+                          ) : (
+                            <span>(ഇനിയും {Math.max(0, reqWords - wordCount)} വാക്കുകൾ കൂടി എഴുതുക)</span>
+                          )}
+                        </span>
                       </div>
-                    )}
-                    <span>{opt.text}</span>
-                  </div>
+                    </div>
+                  );
+                })()}
+              </div>
 
-                  <div className="shrink-0 mt-0.5 sm:mt-1">
-                    <div
-                      className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                        isSelected ? "border-blue-500 bg-blue-500" : "border-slate-600"
+              {/* Submit Written Answer Button */}
+              {(() => {
+                const words = writtenAnswer.trim().split(/\s+/).filter(Boolean);
+                const wordCount = writtenAnswer.trim() ? words.length : 0;
+                const reqWords = currentQ.minWords || 20;
+                const passed = wordCount >= reqWords;
+
+                return (
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!passed) {
+                          alert(`ചുരുങ്ങിയത് ${reqWords} വാക്കുകൾ വേണം (നിലവിൽ ${wordCount} വാക്കുകൾ). Please write at least ${reqWords} words to submit.`);
+                          return;
+                        }
+                        handleSelectOption(writtenAnswer.trim());
+                      }}
+                      disabled={!passed || submitting}
+                      className={`w-full py-3.5 px-6 rounded-xl font-bold text-sm sm:text-base transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer ${
+                        passed
+                          ? "bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-slate-950 shadow-emerald-900/30 active:scale-[0.99]"
+                          : "bg-slate-800 text-slate-500 border border-slate-700/60 cursor-not-allowed opacity-75"
                       }`}
                     >
-                      {isSelected && <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white" />}
-                    </div>
+                      <Send className="w-4 h-4" />
+                      <span>
+                        {currentAnswer
+                          ? "ഉത്തരം അപ്ഡേറ്റ് ചെയ്യുക (Update Answer & Next)"
+                          : "ഉത്തരം സമർപ്പിക്കുക (Submit Answer & Next)"}
+                      </span>
+                    </button>
+                    {!passed && (
+                      <p className="text-[11px] text-amber-400/80 text-center mt-2 font-medium">
+                        ⚠️ 20 വാക്കുകളിൽ കൂടുതലായാൽ മാത്രമേ ഉത്തരം സ്വീകരിക്കുകയും പോയിന്റ് ലഭിക്കുകയും ചെയ്യുകയുള്ളൂ.
+                      </p>
+                    )}
                   </div>
-                </button>
-              );
-            })}
-          </div>
+                );
+              })()}
+            </div>
+          ) : (
+            <div className="space-y-2.5 sm:space-y-3.5">
+              {currentQ.options.map((opt, optIndex) => {
+                const isSelected = currentAnswer === opt.id;
+                const letter = String.fromCharCode(65 + optIndex); // A, B, C, D
+
+                return (
+                  <button
+                    key={opt.id}
+                    onClick={() => handleSelectOption(opt.id)}
+                    className={`w-full text-left p-3 sm:p-4 rounded-xl border transition-all flex items-start gap-3 sm:gap-4 cursor-pointer active:scale-[0.99] ${
+                      isSelected
+                        ? "bg-blue-600/20 border-blue-500 text-white fest-glow-blue ring-1 ring-blue-500/50"
+                        : "bg-slate-900/60 border-slate-800 text-slate-200 hover:bg-slate-800/80 hover:border-slate-700"
+                    }`}
+                  >
+                    <div
+                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
+                        isSelected
+                          ? "bg-blue-600 text-white shadow-md shadow-blue-600/40"
+                          : "bg-slate-800 text-slate-400 border border-slate-700"
+                      }`}
+                    >
+                      {letter}
+                    </div>
+
+                    <div className="flex-1 font-malayalam text-xs sm:text-sm md:text-base leading-relaxed break-words min-w-0">
+                      {opt.imageUrl && (
+                        <div className="relative w-36 h-20 sm:w-40 sm:h-24 rounded-lg overflow-hidden border border-slate-700 mb-2">
+                          <Image
+                            src={opt.imageUrl}
+                            alt={opt.text}
+                            fill
+                            className="object-contain p-1"
+                          />
+                        </div>
+                      )}
+                      <span>{opt.text}</span>
+                    </div>
+
+                    <div className="shrink-0 mt-0.5 sm:mt-1">
+                      <div
+                        className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                          isSelected ? "border-blue-500 bg-blue-500" : "border-slate-600"
+                        }`}
+                      >
+                        {isSelected && <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white" />}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Bottom Navigation Buttons */}

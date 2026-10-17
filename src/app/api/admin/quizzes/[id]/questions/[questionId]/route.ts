@@ -35,7 +35,8 @@ export async function PUT(
     return NextResponse.json({ success: true, question });
   } catch (error) {
     console.error("Error updating question:", error);
-    return NextResponse.json({ error: "Failed to update question" }, { status: 500 });
+    const errMsg = error instanceof Error ? error.message : "Failed to update question";
+    return NextResponse.json({ error: errMsg }, { status: 500 });
   }
 }
 

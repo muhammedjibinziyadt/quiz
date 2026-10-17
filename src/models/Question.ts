@@ -9,10 +9,13 @@ export interface IOption {
 export interface IQuestion extends Document {
   quizId: mongoose.Types.ObjectId;
   order: number;
+  questionType?: "mcq" | "short_answer";
+  minWords?: number;
   questionText: string;
   questionImage?: string;
   options: IOption[];
-  correctOptionId: string;
+  correctOptionId?: string;
+  correctAnswerText?: string;
   explanation?: string;
   marks?: number;
   negativeMarks?: number;
@@ -44,6 +47,15 @@ const QuestionSchema: Schema<IQuestion> = new Schema(
       default: 0,
       index: true,
     },
+    questionType: {
+      type: String,
+      enum: ["mcq", "short_answer"],
+      default: "mcq",
+    },
+    minWords: {
+      type: Number,
+      default: 20,
+    },
     questionText: {
       type: String,
       trim: true,
@@ -55,14 +67,15 @@ const QuestionSchema: Schema<IQuestion> = new Schema(
     },
     options: {
       type: [OptionSchema],
-      validate: [
-        (val: IOption[]) => val.length >= 2,
-        "A question must have at least 2 options",
-      ],
+      default: [],
     },
     correctOptionId: {
       type: String,
-      required: [true, "Correct option ID must be specified"],
+      default: "",
+    },
+    correctAnswerText: {
+      type: String,
+      default: "",
     },
     explanation: {
       type: String,
@@ -88,6 +101,10 @@ const QuestionSchema: Schema<IQuestion> = new Schema(
 );
 
 QuestionSchema.index({ quizId: 1, order: 1 });
+
+if (mongoose.models.Question) {
+  delete (mongoose.models as Record<string, unknown>).Question;
+}
 
 export const Question: Model<IQuestion> =
   mongoose.models.Question ||

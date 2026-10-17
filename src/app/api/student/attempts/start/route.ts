@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
     // Fast projected query: fetch ONLY student-visible fields (never loads correct answers from DB)
     const questions = await Question.find({ quizId })
       .sort({ order: 1 })
-      .select("_id order questionText questionImage options marks timeLimitSeconds")
+      .select("_id order questionType minWords questionText questionImage options marks timeLimitSeconds")
       .lean();
 
     if (questions.length === 0) {
@@ -106,6 +106,8 @@ export async function POST(req: NextRequest) {
     const sanitizedQuestions = questions.map((q) => ({
       _id: q._id,
       order: q.order,
+      questionType: q.questionType || "mcq",
+      minWords: q.minWords ?? 20,
       questionText: q.questionText,
       questionImage: q.questionImage,
       options: q.options,

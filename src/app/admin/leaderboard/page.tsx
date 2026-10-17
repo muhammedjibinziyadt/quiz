@@ -255,6 +255,15 @@ export default function AdminLiveLeaderboardPage() {
                 ))}
               </select>
             </div>
+
+            <a
+              href="#official-standings"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/35 border border-blue-500/40 text-blue-300 hover:text-white text-xs font-bold transition-all cursor-pointer whitespace-nowrap shadow-sm"
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>Participants Table ({totalParticipants})</span>
+              <ArrowDown className="w-3.5 h-3.5 animate-bounce" />
+            </a>
           </div>
         </div>
 
@@ -367,6 +376,15 @@ export default function AdminLiveLeaderboardPage() {
                 )}
               </div>
             </div>
+            <div className="flex justify-center mt-6">
+              <a
+                href="#official-standings"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white text-xs font-semibold shadow-lg transition-all"
+              >
+                <span>View All {totalParticipants} Participants & Points Table</span>
+                <ArrowDown className="w-4 h-4 text-amber-400 animate-bounce" />
+              </a>
+            </div>
           </div>
         )}
 
@@ -412,7 +430,7 @@ export default function AdminLiveLeaderboardPage() {
         )}
 
         {/* Live Ranking Cards Table with Rank Up/Down Animations */}
-        <div className="fest-glass rounded-2xl border border-slate-800 overflow-hidden shadow-2xl">
+        <div id="official-standings" className="fest-glass rounded-2xl border border-slate-800 overflow-hidden shadow-2xl scroll-mt-24">
           <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between">
             <div>
               <h3 className="text-base font-bold text-white flex items-center gap-2">

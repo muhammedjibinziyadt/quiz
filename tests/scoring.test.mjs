@@ -30,14 +30,36 @@ function evaluateQuizAttempt(
 
     totalPossibleMarks += marksForQuestion;
     const selectedOption = answerMap.get(qId);
+    const isShortAnswer = q.questionType === "short_answer";
 
-    if (!selectedOption) {
+    if (!selectedOption || !selectedOption.trim()) {
       unansweredCount++;
       answersDetail.push({
         questionId: qId,
         isCorrect: false,
         marksAwarded: 0,
       });
+    } else if (isShortAnswer) {
+      const words = selectedOption.trim().split(/\s+/).filter(Boolean);
+      const reqWords = q.minWords ?? 20;
+      const isWordCountPassed = words.length >= reqWords;
+
+      if (isWordCountPassed) {
+        correctCount++;
+        totalScore += marksForQuestion;
+        answersDetail.push({
+          questionId: qId,
+          isCorrect: true,
+          marksAwarded: marksForQuestion,
+        });
+      } else {
+        incorrectCount++;
+        answersDetail.push({
+          questionId: qId,
+          isCorrect: false,
+          marksAwarded: 0,
+        });
+      }
     } else if (selectedOption === q.correctOptionId) {
       correctCount++;
       totalScore += marksForQuestion;
@@ -152,4 +174,54 @@ test("Scoring System: Unanswered questions receive zero marks", () => {
   assert.equal(res.correctCount, 1);
   assert.equal(res.incorrectCount, 0);
   assert.equal(res.unansweredCount, 1);
+});
+
+test("Scoring System: Short Answer written question accepts 20+ words and awards points", () => {
+  const quiz = {
+    marksPerQuestion: 5,
+    negativeMarks: 0,
+    negativeMarkingEnabled: false,
+  };
+
+  const questions = [
+    {
+      _id: "q_note",
+      questionType: "short_answer",
+      minWords: 20,
+      marks: 5,
+    },
+  ];
+
+  // 21 words written answer note
+  const valid21WordsAnswer =
+    "This is a detailed and well formulated Malayalam cultural answer note written by the participant demonstrating knowledge of traditional arts fest traditions.";
+  assert.equal(valid21WordsAnswer.trim().split(/\s+/).filter(Boolean).length >= 20, true);
+
+  const resValid = evaluateQuizAttempt(
+    quiz,
+    questions,
+    [{ questionId: "q_note", selectedOptionId: valid21WordsAnswer }],
+    new Date(1000),
+    new Date(10000)
+  );
+
+  assert.equal(resValid.score, 5);
+  assert.equal(resValid.correctCount, 1);
+  assert.equal(resValid.incorrectCount, 0);
+
+  // 10 words written answer note (below 20 words)
+  const invalid10WordsAnswer = "This is a short answer with only ten words here.";
+  assert.equal(invalid10WordsAnswer.trim().split(/\s+/).filter(Boolean).length < 20, true);
+
+  const resInvalid = evaluateQuizAttempt(
+    quiz,
+    questions,
+    [{ questionId: "q_note", selectedOptionId: invalid10WordsAnswer }],
+    new Date(1000),
+    new Date(10000)
+  );
+
+  assert.equal(resInvalid.score, 0);
+  assert.equal(resInvalid.correctCount, 0);
+  assert.equal(resInvalid.incorrectCount, 1);
 });
