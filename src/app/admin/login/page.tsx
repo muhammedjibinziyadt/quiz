@@ -148,12 +148,7 @@ export default function AdminLoginPage() {
               </button>
             </form>
 
-            <div className="mt-6 pt-5 border-t border-slate-800 text-center">
-              <p className="text-xs text-slate-400">
-                Default local credentials: <code className="text-amber-400 font-mono">admin</code> /{" "}
-                <code className="text-amber-400 font-mono">admin123</code>
-              </p>
-            </div>
+
           </div>
         </div>
       </main>
