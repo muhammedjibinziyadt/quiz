@@ -28,7 +28,10 @@ import {
   Clock,
   Pencil,
   FileText,
+  FileDown,
+  Printer,
 } from "lucide-react";
+import { QuizPdfModal } from "@/components/QuizPdfModal";
 
 interface Option {
   id: string;
@@ -101,6 +104,9 @@ function EditQuizContent({
   const [settingsMaxAttempts, setSettingsMaxAttempts] = useState(1);
   const [settingsAllowReview, setSettingsAllowReview] = useState(true);
   const [savingSettings, setSavingSettings] = useState(false);
+
+  // PDF Download Modal state
+  const [showPdfModal, setShowPdfModal] = useState(false);
 
   // Question Modal state
   const [showQuestionModal, setShowQuestionModal] = useState(false);
@@ -470,6 +476,16 @@ function EditQuizContent({
 
           <div className="flex items-center gap-2.5">
             <button
+              type="button"
+              onClick={() => setShowPdfModal(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs sm:text-sm font-semibold transition-all shadow-sm cursor-pointer"
+              title="Download Questions & Answers PDF"
+            >
+              <FileDown className="w-4 h-4 text-emerald-400" />
+              <span>Download PDF</span>
+            </button>
+
+            <button
               onClick={handleTogglePublish}
               className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${quiz.status === "published"
                 ? "bg-amber-950/80 text-amber-300 border border-amber-800 hover:bg-amber-900/80"
@@ -509,17 +525,29 @@ function EditQuizContent({
         {/* TAB 1: QUESTIONS BUILDER */}
         {activeTab === "questions" && (
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <p className="text-xs text-slate-400">
                 Add multiple-choice questions, question images, and configure time limits for each question.
               </p>
-              <button
-                onClick={handleOpenAddQuestion}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-600/30 cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add Question</span>
-              </button>
+              <div className="flex items-center gap-2 self-end sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setShowPdfModal(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs sm:text-sm font-semibold transition-all shadow-sm cursor-pointer"
+                  title="Download Questions & Answers PDF"
+                >
+                  <FileDown className="w-4 h-4 text-emerald-400" />
+                  <span>PDF Download</span>
+                </button>
+
+                <button
+                  onClick={handleOpenAddQuestion}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-600/30 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Question</span>
+                </button>
+              </div>
             </div>
 
             {questions.length === 0 ? (
@@ -1042,6 +1070,14 @@ function EditQuizContent({
           </div>
         </div>
       )}
+
+      {/* Quiz PDF Download & Export Modal */}
+      <QuizPdfModal
+        isOpen={showPdfModal}
+        onClose={() => setShowPdfModal(false)}
+        quiz={quiz}
+        questions={questions}
+      />
 
       <Footer />
     </div>

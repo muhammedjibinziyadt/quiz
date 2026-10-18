@@ -20,6 +20,7 @@ import {
   Layers,
   Trophy,
   Calendar,
+  FileDown,
 } from "lucide-react";
 
 interface QuizRecord {
@@ -239,6 +240,15 @@ export default function AdminQuizzesListPage() {
                       >
                         <Edit className="w-3.5 h-3.5 text-blue-400" />
                         <span>Edit & Questions</span>
+                      </Link>
+
+                      <Link
+                        href={`/admin/quizzes/${quiz._id}/print`}
+                        target="_blank"
+                        className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-emerald-400 border border-slate-700 transition-colors flex items-center justify-center shrink-0"
+                        title="Download / Print PDF (Questions & Answers)"
+                      >
+                        <FileDown className="w-3.5 h-3.5 text-emerald-400" />
                       </Link>
 
                       <button
